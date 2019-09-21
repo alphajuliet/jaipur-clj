@@ -8,24 +8,30 @@
 
 ;-------------------------------
 ; Random card from the deck
-; random-card :: State -> Card
+; random-card :: State -> Resource
 (defn random-card [st]
   (->> (l/focus _deck st)
        (h/hash-enumerate)
        (random-element)))
 
-
 ;-------------------------------
 ; Move n cards from _src to _dest
-; If not possible then throw an error
-#_(defn move-cards [rsrc _src _dest n st]
-  (if (> n (view (>>> _src (_rsrc rsrc)) st))
-    (raise-user-error 'move-card
-                      (format "failed because insufficient ~a cards are available to move from ~a."
-                              rsrc (view _src st)))
-      ;else
-    (~>> st
-         (over (>>> _src (_rsrc rsrc)) (curry flip - n))
-         (over (>>> _dest (_rsrc rsrc)) (curry + n)))))
+; move-cards :: Resource -> Lens -> Lens -> State -> State
+(defn move-cards [rsrc _src _dest n st]
+  (assert (<= n (l/focus (comp _src (l/key rsrc)) st)))
+  (->> st
+       (l/over (comp _src (l/key rsrc)) (fn [x] (- x n)))
+       (l/over (comp _dest (l/key rsrc)) (fn [x] (+ x n)))))
+
+; Deal n cards from the deck to the target
+; deal-cards :: Lens -> Int -> State -> State
+(defn deal-cards [_target n state]
+  (def st state)
+  (def n1 (min n (h/hash-sum (l/focus _deck state)))) ;only deal as many as are left
+  (reduce (fn [s i]
+            (move-cards (random-card s) _deck _target 1 s)) 
+          st
+          (range n1)))
+
 
 ;; The End
