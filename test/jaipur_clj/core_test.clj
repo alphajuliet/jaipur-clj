@@ -18,4 +18,6 @@
                      initial-state))))
   (is (= 55 (h/hash-sum all-cards))))
 
-; The End
+(deftest actions-tests)
+
+;; The End
