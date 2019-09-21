@@ -4,6 +4,7 @@
 (ns jaipur-clj.core-test
   (:require [clojure.test :refer :all]
             [jaipur-clj.core :refer :all]
+            [jaipur-clj.hash-calc :as h]
             [lentes.core :as l]
             [clojure.test :refer :all]))
 
@@ -14,6 +15,7 @@
 (deftest state-tests
   (is (= 7 (count 
             (l/focus (l/in [:tokens :cloth]) 
-                     initial-state)))))
+                     initial-state))))
+  (is (= 55 (h/hash-sum all-cards))))
 
 ; The End
