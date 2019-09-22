@@ -29,7 +29,7 @@
 
 ; Deal n cards from the deck to the target
 ; deal-cards :: Lens -> Int -> State -> State
-(defn- deal-cards
+(defn deal-cards
   "Deal n cards from the deck to the target"
   [_target n state]
   (let [st state
@@ -149,7 +149,7 @@
 
 
 ;-------------------------------
-; Exchange cards with the market. This includes using camels. @@TODO
+; Exchange cards
 
 (defn exchange-cards-invalid?
   "Determine if the exchange-cards action is valid."
@@ -172,8 +172,10 @@
     "Cannot have more than 7 hand cards after exchange."
     :else false))
 
-; exchange-cards :: Player -> Cards -> Cards -> State -> State
-(defn exchange-cards [player-cards market-cards plyr st]
+; exchange-cards ::  Cards -> Cards -> Player ->State -> State
+(defn exchange-cards 
+  "Exchange cards with the market, including swapping for camels."
+  [player-cards market-cards plyr st]
 
   ; Helper functions
   (defn enough-cards? [cards _hand]
@@ -189,5 +191,34 @@
           ; Move market cards to player
        (l/over (comp _hand (l/key plyr)) #(h/hash-add % market-cards))
        (l/over _market #(h/hash-sub % market-cards))))
+
+;-------------------------------
+; end-of-game? :: State -> Boolean
+(defn end-of-game? 
+  "Check for end of game
+   - Deck is empty
+   - Three token piles are empty"
+  [st]
+  
+  (def token-lengths 
+    (->> st 
+         (l/focus _tokens) 
+         vals
+         (map count)))
+
+  (or (= 0 (h/hash-sum (l/focus _deck st)))
+      (= 3 (count (filter #(= % 0) token-lengths)))))
+
+;-------------------------------
+; apply-end-bonus :: State -> State
+(defn apply-end-bonus 
+  "Add end-of-game bonus of 5 points for greater number of camels."
+  [st]
+  (def ca (l/focus (comp _hand (l/key :a) (l/key :camel)) st))
+  (def cb (l/focus (comp _hand (l/key :b) (l/key :camel)) st))
+  
+  (cond [(> ca cb) (l/over (comp _points (l/key :a)) #(+ % 5) st)
+         (< ca cb) (l/over (comp _points (l/key :b)) #(+ % 5) st)
+         :else st]))
 
 ;; The End

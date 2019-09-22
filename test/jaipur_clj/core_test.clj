@@ -38,6 +38,12 @@
     (let [s0 (init-game 0)
           p {:silver 1 :leather 1}
           m {:gold 1 :spice 1}]
-      (is (string? (exchange-cards-invalid? p m :a s0))))))
+      (is (string? (exchange-cards-invalid? p m :a s0)))))
+  
+  (testing "end of game"
+    (let [s0 (init-game 0)
+          s1 (deal-cards _market 55 s0)]
+      (is (= false (end-of-game? s0)))
+      (is (= true (end-of-game? s1))))))
 
 ;; The End

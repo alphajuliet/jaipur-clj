@@ -2,7 +2,8 @@
 ;; AndrewJ 2019-09-21
 
 (ns jaipur-clj.core
-  (:require [lentes.core :as l]))
+  (:require [lentes.core :as l]
+            [clojure.pprint :as pp]))
 
 (def empty-hand {:diamond 0
                  :gold 0
@@ -63,5 +64,17 @@
   (- (h/hash-sum hand) 
      (:camel hand)))
 
-
+(defn ppst 
+  "Pretty print the state."
+  [st]
+  #_(pp/pprint st)
+  (print "Deck, Market, Hand A, Hand B:")
+  (pp/print-table [(l/focus _deck st)
+                   (l/focus _market st)
+                   (l/focus (comp _hand (l/key :a)) st)
+                   (l/focus (comp _hand (l/key :b)) st)])
+  (print "Points:")
+  (pp/print-table [(l/focus _points st)])
+  (println "Tokens:")
+  (pp/pprint (l/focus _tokens st)))
 ; The End
