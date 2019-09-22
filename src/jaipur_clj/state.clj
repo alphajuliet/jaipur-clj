@@ -28,13 +28,13 @@
           :b empty-hand}
    :points {:a 0
             :b 0}
-   :tokens {:diamond '(7 7 5 5 5)
-            :gold '(6 6 5 5 5)
-            :silver '(5 5 5 5 5)
-            :cloth '(5 3 3 2 2 1 1)
-            :spice '(5 3 3 2 2 1 1)
-            :leather '(4 3 2 1 1 1 1 1 1)
-            :camel '()}})
+   :tokens {:diamond [7 7 5 5 5]
+            :gold [6 6 5 5 5]
+            :silver [5 5 5 5 5]
+            :cloth [5 3 3 2 2 1 1]
+            :spice [5 3 3 2 2 1 1]
+            :leather [4 3 2 1 1 1 1 1 1]
+            :camel []}})
 
 ; Lenses
 (def _deck (l/key :deck))
@@ -45,16 +45,21 @@
 ;(defn _rsrc [r] (l/key r))
 ;(defn _player [p] (l/key p))
 
+;; -------------------------------------
 ; Minimum sell quantities
 (def min-sell-hash
   {:diamond 2 :gold 2 :silver 2
    :cloth 1 :spice 1 :leather 1
    :camel 99})
 
-(defn min-sell [rsrc]
+(defn min-sell 
+  "The minimum sell number for a resource"
+  [rsrc]
   (rsrc min-sell-hash))
 
-(defn count-cards-excl-camels [hand]
+(defn count-cards-excl-camels 
+  "Count call the cards in a hand, excluding the camels"
+  [hand]
   (- (h/hash-sum hand) 
      (:camel hand)))
 

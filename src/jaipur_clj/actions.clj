@@ -9,25 +9,29 @@
   (:refer-clojure :exclude [rand rand-int rand-nth]))
 
 ;-------------------------------
-; Random card from the deck
 ; random-card :: State -> Resource
-(defn random-card [st]
+(defn- random-card
+  "Random card from the deck"
+  [st]
   (->> (l/focus _deck st)
        (h/hash-enumerate)
        (rand-nth)))
 
 ;-------------------------------
-; Move n cards from _src to _dest
 ; move-cards :: Resource -> Lens -> Lens -> Int -> State -> State
-(defn move-cards [rsrc _src _dest n st]
+(defn move-cards
+  "Move n cards from _src to _dest"
+  [rsrc _src _dest n st]
   (assert (<= n (l/focus (comp _src (l/key rsrc)) st)))
   (->> st
-       (l/over (comp _src (l/key rsrc)) (fn [x] (- x n)))
-       (l/over (comp _dest (l/key rsrc)) (fn [x] (+ x n)))))
+       (l/over (comp _src (l/key rsrc)) #(- % n))
+       (l/over (comp _dest (l/key rsrc)) #(+ % n))))
 
 ; Deal n cards from the deck to the target
 ; deal-cards :: Lens -> Int -> State -> State
-(defn deal-cards [_target n state]
+(defn- deal-cards
+  "Deal n cards from the deck to the target"
+  [_target n state]
   (let [st state
         n1 (min n (h/hash-sum (l/focus _deck state)))] ;only deal as many as are left
     (reduce
@@ -35,6 +39,30 @@
        (move-cards (random-card s) _deck _target 1 s))
      st (range n1))))
 
+; take-tokens :: Resource -> Player -> Int -> State -> State
+(defn- take-tokens
+  "Take n resource tokens and add to player's score"
+  [rsrc plyr n st]
+
+  (defn- bonus-points
+    "Calculate bonus points for 3+ cards"
+    [n]
+    (cond
+      (= n 3) (rand-nth '(1 2 3))
+      (= n 4) (rand-nth '(4 5 6))
+      (= n 5) (rand-nth '(8 9 10))
+      :else 0))
+
+  (def t (l/focus (comp _tokens (l/key rsrc)) st))
+  (def v ; Return the tokens, split into two
+    (if (>= n (count t))
+      [t '()]
+      (split-at n t)))
+
+  (->> st
+       (l/over (comp _points (l/key plyr))
+               #(+ % (apply + (first v)) (bonus-points n)))
+       (l/put (comp _tokens (l/key rsrc)) (second v))))
 
 ;===============================
 ; Game actions
@@ -44,9 +72,9 @@
 ; - Exchange cards
 
 ;-------------------------------
-; Initialise the game, with an optional seed > 0
-; init-game :: Int? -> State
 (defn init-game
+; init-game :: Int? -> State
+  "Initialise the game, with an optional seed > 0"
   ([]
    (->> initial-state
         (move-cards :camel _deck _market 3)
@@ -65,7 +93,9 @@
 ; - Player is not taking camels, and already has 7 non-camel cards in their hand
 
 ; take-card-invalid? :: Resource -> Player -> State -> Boolean | String
-(defn take-card-invalid? [rsrc plyr st]
+(defn take-card-invalid?
+  "Confirm whether the take-card action is valid."
+  [rsrc plyr st]
   (let [player-hand (l/focus (comp _hand (l/key plyr)) st)]
     (if (and (not (= rsrc :camel))
              (> (count-cards-excl-camels player-hand) 7))
@@ -73,7 +103,9 @@
       false)))
 
 ; take-card :: Resource -> Player -> State -> State
-(defn take-card [rsrc plyr st]
+(defn take-card
+  "Take a card from the market (or all the camels), and deal replacement cards to the deck"
+  [rsrc plyr st]
 
   (def n-market-camels (l/focus (comp _market (l/key :camel)) st))
   (def player-hand (l/focus (comp _hand (l/key plyr)) st))
@@ -88,5 +120,31 @@
     (->> st
          (move-cards rsrc _market (comp _hand (l/key plyr)) 1)
          (deal-cards _market 1))))
+
+;-------------------------------
+; Sell cards
+
+; sell-cards-invalid? :: Player -> Resource -> State -> Boolean | String|
+(defn sell-cards-invalid?
+  "Determine whether the sell-cards action is valid."
+  [rsrc plyr st]
+  (let [n (l/focus (comp _hand (l/key plyr) (l/key rsrc)) st)]
+    (cond
+      (= rsrc :camel) (format "Player %s cannot sell camels." plyr)
+      (< n (min-sell rsrc)) (format "Player %s does not enough %s cards to sell." plyr rsrc)
+      :else false)))
+
+; sell-cards :: Player -> Resource -> State -> State
+(defn sell-cards
+  "Sell all the given resources in a player's hand, and take tokens."
+  [rsrc plyr st]
+
+  (def n (l/focus (comp _hand (l/key plyr) (l/key rsrc)) st))
+  (def error? (sell-cards-invalid? rsrc plyr st))
+  (assert (boolean? error?) error?)
+
+  (->> st
+       (l/over (comp _hand (l/key plyr) (l/key rsrc)) #(- % n))
+       (take-tokens rsrc plyr n)))
 
 ;; The End

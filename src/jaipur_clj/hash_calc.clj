@@ -5,7 +5,7 @@
 (ns jaipur-clj.hash-calc)
 
 (defn hash-sum [h]
-  (reduce + (vals h)))
+  (apply + (vals h)))
 
 (defn hash-enumerate [h]
   (reduce-kv 
