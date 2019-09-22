@@ -36,6 +36,13 @@
      st (range n1))))
 
 
+;===============================
+; Game actions
+; - Init game
+; - Take cards
+; - Sell cards
+; - Exchange cards
+
 ;-------------------------------
 ; Initialise the game, with an optional seed > 0
 ; init-game :: Int? -> State
@@ -49,5 +56,37 @@
   ([seed]
    (set-random-seed! seed)
    (init-game)))
+
+;-------------------------------
+; Take a card from the market (or all the camels)
+; Deal replacement cards to the deck
+
+; Invalid if:
+; - Player is not taking camels, and already has 7 non-camel cards in their hand
+
+; take-card-invalid? :: Resource -> Player -> State -> Boolean | String
+(defn take-card-invalid? [rsrc plyr st]
+  (let [player-hand (l/focus (comp _hand (l/key plyr)) st)]
+    (if (and (not (= rsrc :camel))
+             (> (count-cards-excl-camels player-hand) 7))
+      (format "Player %s cannot have more than 7 cards, excluding camels." plyr)
+      false)))
+
+; take-card :: Resource -> Player -> State -> State
+(defn take-card [rsrc plyr st]
+
+  (def n-market-camels (l/focus (comp _market (l/key :camel)) st))
+  (def player-hand (l/focus (comp _hand (l/key plyr)) st))
+  (def error (take-card-invalid? rsrc plyr st))
+
+  (assert (boolean? error) error)
+  (if (= rsrc :camel)
+    (->> st
+         (move-cards rsrc _market (comp _hand (l/key plyr)) n-market-camels)
+         (deal-cards _market n-market-camels))
+    ; else
+    (->> st
+         (move-cards rsrc _market (comp _hand (l/key plyr)) 1)
+         (deal-cards _market 1))))
 
 ;; The End

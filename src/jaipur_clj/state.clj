@@ -54,7 +54,9 @@
 (defn min-sell [rsrc]
   (rsrc min-sell-hash))
 
-;(def count-cards-excl-camels [h]
-;  (- (hash-sum h) (hash-ref h :camel)))
+(defn count-cards-excl-camels [hand]
+  (- (h/hash-sum hand) 
+     (:camel hand)))
+
 
 ; The End
