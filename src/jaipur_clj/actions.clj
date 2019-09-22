@@ -147,4 +147,47 @@
        (l/over (comp _hand (l/key plyr) (l/key rsrc)) #(- % n))
        (take-tokens rsrc plyr n)))
 
+
+;-------------------------------
+; Exchange cards with the market. This includes using camels. @@TODO
+
+(defn exchange-cards-invalid?
+  "Determine if the exchange-cards action is valid."
+  [player-cards market-cards plyr st]
+
+  (defn- enough-cards? [cards _hand]
+    (> 0 (h/hash-min (h/hash-sub (l/focus _hand st) cards))))
+
+  (def player-hand (l/focus (comp _hand (l/key plyr)) st))
+
+  (cond
+    (not (= (h/hash-sum player-cards) (h/hash-sum market-cards)))
+    "Different number of resources being exchanged."
+    (or (enough-cards? player-cards (comp _hand (l/key plyr)))
+        (enough-cards? market-cards _market))
+    "Cannot exchange resources that aren't available."
+    (contains? market-cards :camel)
+    "Cannot exchange a camel from the market."
+    (> (+ (count-cards-excl-camels player-hand) (:camel player-cards 0)) 7)
+    "Cannot have more than 7 hand cards after exchange."
+    :else false))
+
+; exchange-cards :: Player -> Cards -> Cards -> State -> State
+(defn exchange-cards [player-cards market-cards plyr st]
+
+  ; Helper functions
+  (defn enough-cards? [cards _hand]
+    (> 0 (h/hash-min (h/hash-sub (l/focus _hand st) cards))))
+  (def player-hand (l/focus (comp _hand (l/key plyr)) st))
+  (def error? (exchange-cards-invalid? player-cards market-cards plyr st))
+  (assert (boolean? error?) error?)
+
+  (->> st
+        ; Move player cards to market
+       (l/over _market #(h/hash-add % player-cards))
+       (l/over (comp _hand (l/key plyr)) #(h/hash-sub % player-cards))
+          ; Move market cards to player
+       (l/over (comp _hand (l/key plyr)) #(h/hash-add % market-cards))
+       (l/over _market #(h/hash-sub % market-cards))))
+
 ;; The End

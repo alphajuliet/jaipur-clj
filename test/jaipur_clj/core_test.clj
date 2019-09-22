@@ -27,12 +27,17 @@
       (is true (string? (take-card-invalid? :spice :a s1)))
       (is (= 1 (l/focus (l/in [:hand :a :leather]) s2)))))
 
-  (testing "sell-card"
+  (testing "sell-cards"
     (let [s0 (init-game 0)
           s1 (l/put (l/in [:tokens :spice]) [1] s0)
           s2 (sell-cards :spice :a s1)]
       (is (= true (string? (sell-cards-invalid? :diamond :b s0))))
-      (is (= [] (l/focus (l/in [:tokens :spice]) s2))))))
+      (is (= [] (l/focus (l/in [:tokens :spice]) s2)))))
 
+  (testing "exchange-cards"
+    (let [s0 (init-game 0)
+          p {:silver 1 :leather 1}
+          m {:gold 1 :spice 1}]
+      (is (string? (exchange-cards-invalid? p m :a s0))))))
 
 ;; The End
