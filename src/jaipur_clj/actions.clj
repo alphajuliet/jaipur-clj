@@ -56,13 +56,13 @@
   (def t (l/focus (comp _tokens (l/key rsrc)) st))
   (def v ; Return the tokens, split into two
     (if (>= n (count t))
-      [t '()]
+      [t []]
       (split-at n t)))
 
   (->> st
        (l/over (comp _points (l/key plyr))
                #(+ % (apply + (first v)) (bonus-points n)))
-       (l/put (comp _tokens (l/key rsrc)) (second v))))
+       (l/put (comp _tokens (l/key rsrc)) (into [] (second v)))))
 
 ;===============================
 ; Game actions
@@ -107,19 +107,19 @@
   "Take a card from the market (or all the camels), and deal replacement cards to the deck"
   [rsrc plyr st]
 
-  (def n-market-camels (l/focus (comp _market (l/key :camel)) st))
-  (def player-hand (l/focus (comp _hand (l/key plyr)) st))
-  (def error (take-card-invalid? rsrc plyr st))
+  (let [error (take-card-invalid? rsrc plyr st)]
+    (assert (boolean? error) error))
 
-  (assert (boolean? error) error)
-  (if (= rsrc :camel)
-    (->> st
-         (move-cards rsrc _market (comp _hand (l/key plyr)) n-market-camels)
-         (deal-cards _market n-market-camels))
-    ; else
-    (->> st
-         (move-cards rsrc _market (comp _hand (l/key plyr)) 1)
-         (deal-cards _market 1))))
+  (let [n-market-camels (l/focus (comp _market (l/key :camel)) st)
+        player-hand (l/focus (comp _hand (l/key plyr)) st)]
+    (if (= rsrc :camel)
+      (->> st
+           (move-cards rsrc _market (comp _hand (l/key plyr)) n-market-camels)
+           (deal-cards _market n-market-camels))
+     ; else
+      (->> st
+           (move-cards rsrc _market (comp _hand (l/key plyr)) 1)
+           (deal-cards _market 1)))))
 
 ;-------------------------------
 ; Sell cards
@@ -139,13 +139,13 @@
   "Sell all the given resources in a player's hand, and take tokens."
   [rsrc plyr st]
 
-  (def n (l/focus (comp _hand (l/key plyr) (l/key rsrc)) st))
-  (def error? (sell-cards-invalid? rsrc plyr st))
-  (assert (boolean? error?) error?)
+  (let [error? (sell-cards-invalid? rsrc plyr st)]
+    (assert (boolean? error?) error?))
 
-  (->> st
-       (l/over (comp _hand (l/key plyr) (l/key rsrc)) #(- % n))
-       (take-tokens rsrc plyr n)))
+  (let [n (l/focus (comp _hand (l/key plyr) (l/key rsrc)) st)]
+    (->> st
+         (l/over (comp _hand (l/key plyr) (l/key rsrc)) #(- % n))
+         (take-tokens rsrc plyr n))))
 
 
 ;-------------------------------
@@ -173,16 +173,16 @@
     :else false))
 
 ; exchange-cards ::  Cards -> Cards -> Player ->State -> State
-(defn exchange-cards 
+(defn exchange-cards
   "Exchange cards with the market, including swapping for camels."
   [player-cards market-cards plyr st]
 
   ; Helper functions
-  (defn enough-cards? [cards _hand]
-    (> 0 (h/hash-min (h/hash-sub (l/focus _hand st) cards))))
-  (def player-hand (l/focus (comp _hand (l/key plyr)) st))
-  (def error? (exchange-cards-invalid? player-cards market-cards plyr st))
-  (assert (boolean? error?) error?)
+  #_(defn enough-cards? [cards _hand]
+      (> 0 (h/hash-min (h/hash-sub (l/focus _hand st) cards))))
+  #_(def player-hand (l/focus (comp _hand (l/key plyr)) st))
+  (let [error? (exchange-cards-invalid? player-cards market-cards plyr st)]
+    (assert (boolean? error?) error?))
 
   (->> st
         ; Move player cards to market
@@ -194,15 +194,15 @@
 
 ;-------------------------------
 ; end-of-game? :: State -> Boolean
-(defn end-of-game? 
+(defn end-of-game?
   "Check for end of game
    - Deck is empty
    - Three token piles are empty"
   [st]
-  
-  (def token-lengths 
-    (->> st 
-         (l/focus _tokens) 
+
+  (def token-lengths
+    (->> st
+         (l/focus _tokens)
          vals
          (map count)))
 
@@ -211,14 +211,14 @@
 
 ;-------------------------------
 ; apply-end-bonus :: State -> State
-(defn apply-end-bonus 
+(defn apply-end-bonus
   "Add end-of-game bonus of 5 points for greater number of camels."
   [st]
-  (def ca (l/focus (comp _hand (l/key :a) (l/key :camel)) st))
-  (def cb (l/focus (comp _hand (l/key :b) (l/key :camel)) st))
-  
-  (cond [(> ca cb) (l/over (comp _points (l/key :a)) #(+ % 5) st)
-         (< ca cb) (l/over (comp _points (l/key :b)) #(+ % 5) st)
-         :else st]))
+
+  (let [ca (l/focus (comp _hand (l/key :a) (l/key :camel)) st)
+        cb (l/focus (comp _hand (l/key :b) (l/key :camel)) st)]
+    (cond (> ca cb) (l/over (comp _points (l/key :a)) #(+ % 5) st)
+          (< ca cb) (l/over (comp _points (l/key :b)) #(+ % 5) st)
+          :else st)))
 
 ;; The End

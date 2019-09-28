@@ -20,7 +20,7 @@
       (is (= {:a 3 :b 3 :c 3 :d 6} (hash-sub h2 h1)))))
 
   (testing "hash-collect"
-    (let ([lst '(a b b c c c)])
+    (let [lst '(:a :b :b :c :c :c)]
       (is (= {:a 1 :b 2 :c 3} (hash-collect lst))))))
 
 ; The End

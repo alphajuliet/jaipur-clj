@@ -4,38 +4,40 @@
 
 (ns jaipur-clj.hash-calc)
 
-(defn hash-min [h]
+(defn hash-min 
+  "Return the minimum value in a numeric hash."
+  [h]
   (apply min (vals h)))
 
 (defn hash-sum
-  "Sum the values of the hash."
+  "Sum the values of the numeric hash."
   [h]
   (apply + (vals h)))
 
 (defn hash-union
-  "Combine two hashes with a combining function for values with matching keys"
+  "Combine two numeric hashes with a combining function for values with matching keys"
   [f h1 h2]
   (merge-with f h1 h2))
 
 (defn hash-add
-  "Add matching values from two hashes."
+  "Add matching values from two numeric hashes."
   [h1 h2]
   (hash-union + h1 h2))
 
 (defn hash-sub
-  "Subtract matching values from two hashes."
+  "Subtract matching values from two numeric hashes."
   [h1 h2]
   (hash-union - h1 h2))
 
 (defn hash-enumerate
-  "For each pair, return v copies of k, and concatenate across the hash."
+  "For each pair [k v] in a numeric hash, add v copies of k, and concatenate into a single list."
   [h]
   (reduce-kv
    (fn [m k v]
      (into m (repeat v k))) [] h))
 
 (defn hash-collect
-  "Collect a list into a hash of counts."
+  "Collect a list into a numeric hash of counts."
   [lst]
   (into {} (map (fn [[k v]] [k (count v)])
                 (group-by identity lst))))

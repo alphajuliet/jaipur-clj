@@ -25,22 +25,21 @@
    2. Any (non-camel) resource from the market, if player hand contains less than 7 cards"
   [plyr st]
 
-  (def market-camels (l/focus (comp _market (l/key :camel)) st))
-  (def market-cards (l/focus _market st))
-  (def player-cards (l/focus (comp _hand (l/key plyr)) st))
-  (def n-player-cards (count-cards-excl-camels player-cards))
-
-  (concat
-     ; case 1
-   (if (> market-camels 0)
-     (list `(take-card :camel ~plyr))
-     '())
-     ; case 2
-   (for [[k v] (seq market-cards)
-         :when (not= k :camel)
-         :when (> v 0)
-         :when (< n-player-cards 7)]
-     `(take-card ~k ~plyr))))
+  (let [market-camels (l/focus (comp _market (l/key :camel)) st)
+        market-cards (l/focus _market st)
+        player-cards (l/focus (comp _hand (l/key plyr)) st)
+        n-player-cards (count-cards-excl-camels player-cards)]
+    (concat
+    ; case 1
+     (if (> market-camels 0)
+       (list `(take-card :camel ~plyr))
+       '())
+    ; case 2
+     (for [[k v] (seq market-cards)
+           :when (not= k :camel)
+           :when (> v 0)
+           :when (< n-player-cards 7)]
+       `(take-card ~k ~plyr)))))
 
 
 ;-------------------------------
@@ -78,7 +77,7 @@
 (defn available-actions
   "Return all the available actions, given a player and a current state."
   [plyr st]
-  (reduce concat '() 
+  (reduce concat '()
           ((juxt take-card-options sell-cards-options exchange-cards-options)
            plyr st)))
 
