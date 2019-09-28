@@ -39,11 +39,26 @@
           p {:silver 1 :leather 1}
           m {:gold 1 :spice 1}]
       (is (string? (exchange-cards-invalid? p m :a s0)))))
-  
+
   (testing "end of game"
     (let [s0 (init-game 0)
           s1 (deal-cards _market 55 s0)]
       (is (= false (end-of-game? s0)))
-      (is (= true (end-of-game? s1))))))
+      (is (= true (end-of-game? s1)))))
+
+  (deftest game-tests
+    (testing "Utilities"
+      (let [h0 {:a 1 :b 2 :c 3}
+            l0 (range 10)]
+        (is (= 6 (count (key-combinations h0 3))))
+        (is (= 5 (count-if even? l0)))))
+    (testing "available-actions"
+      (let [s0 (init-game 0)]
+        (is (= 2 (count (take-card-options :a s0))))
+        (is (= 2 (count (sell-cards-options :a s0))))
+        (is (= 3 (count (exchange-cards-options :a s0))))
+        (is (= 7 (count (available-actions :a s0))))))))
+
+
 
 ;; The End

@@ -67,7 +67,6 @@
 (defn ppst 
   "Pretty print the state."
   [st]
-  #_(pp/pprint st)
   (print "Deck, Market, Hand A, Hand B:")
   (pp/print-table [(l/focus _deck st)
                    (l/focus _market st)
@@ -77,4 +76,5 @@
   (pp/print-table [(l/focus _points st)])
   (println "Tokens:")
   (pp/pprint (l/focus _tokens st)))
-; The End
+
+;; The End
