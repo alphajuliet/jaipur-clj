@@ -215,6 +215,7 @@
   "Add end-of-game bonus of 5 points for greater number of camels."
   [st]
 
+  (println "Apply end bonus points.")
   (let [ca (l/focus (comp _hand (l/key :a) (l/key :camel)) st)
         cb (l/focus (comp _hand (l/key :b) (l/key :camel)) st)]
     (cond (> ca cb) (l/over (comp _points (l/key :a)) #(+ % 5) st)

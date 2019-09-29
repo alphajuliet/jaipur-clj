@@ -51,7 +51,9 @@
       (let [h0 {:a 1 :b 2 :c 3}
             l0 (range 10)]
         (is (= 6 (count (key-combinations h0 3))))
-        (is (= 5 (count-if even? l0)))))
+        (is (= 5 (count-if even? l0)))
+        (is (= :c (argmax-map h0)))
+        (is (= -5 (argmax #(Math/abs %) [-5 1 4])))))
     (testing "available-actions"
       (let [s0 (init-game 0)]
         (is (= 2 (count (take-card-options :a s0))))

@@ -3,13 +3,33 @@
 ;; AndrewJ 2019-09-28
 
 (ns jaipur-clj.core
-  (:require [jaipur-clj.hash-calc :as h]))
+  (:require [lentes.core :as l]
+            [jaipur-clj.hash-calc :as h]))
 
 ;-------------------------------
 ; Utility functions
 
 ; random-value :: Hash a b -> b
 (def random-value (comp rand-nth vals))
+
+(defn argmax-map
+  "Find the key with the maximum value."
+  [m]
+  (key (apply max-key val m)))
+
+(defn argmax
+  "Find the value in xs that maximises (f x)."
+  [f xs]
+  (apply max-key f xs))
+
+; From https://stackoverflow.com/questions/1601321/idiomatic-mode-function-in-clojure
+(defn tally-map
+  " Create a map where the keys are all of the unique elements in the input
+   sequence and the values represent the number of times those elements
+   occur. Note that the keys may not be formatted as conventional Clojure
+   keys, i.e. a colon preceding a symbol."
+  [aseq]
+  (apply merge-with + (map (fn [x] {x 1}) aseq)))
 
 ;-------------------------------
 ; type Policy = Player -> State -> Action
@@ -23,25 +43,13 @@
     (apply-action action st)))
 
 ;-------------------------------
-; Random policy
-
-; policy-random :: Player -> State -> Action
-(defn policy-random
-  "Choose a random action from the ones available."
-  [player state]
-  (->> (available-actions player state)
-       (group-by first)
-       (random-value)
-       (rand-nth)))
-
-;-------------------------------
 ; play-game :: Policy -> State -> State
 (defn play-game
-  "Play a game with a policy function for both players."
-  ([policy initial-state]
-   (play-game policy initial-state 100))
+  "Play a game with a policy function for each player."
+  ([policy-a policy-b initial-state]
+   (play-game policy-a policy-b initial-state 100))
 
-  ([policy initial-state max-iter]
+  ([policy-a policy-b initial-state max-iter]
 
   ; Iterate through the actions for each player to generate a final state
    (reduce
@@ -50,22 +58,46 @@
             :else (do
                     (println (format "Iteration %d:" i))
                     (->> state
-                         (apply-policy policy :a)
-                         (apply-policy policy :b)))))
+                         (apply-policy policy-a :a)
+                         (apply-policy policy-b :b)))))
     initial-state
     (range max-iter))))
 
+(defn winner
+  "Identify the winner"
+  [st]
+  (argmax-map (l/focus _points st)))
 
-#_(for [iteration (range max-iter)
-        :while (< iteration max-iter)
-        :while (not (end-of-game? st))]
-    (->> st
-         (apply-policy policy :a)
-         (apply-policy policy :b)))
-     ; Add the bonus points for the more camels
+(defn play-n-games
+  "Play n games using the same policies and initial state, and aggregate the wins."
+  [n policy-a policy-b initial-state]
+  (tally-map 
+   (reduce (fn [s i] (conj s (winner (play-game policy-a policy-b initial-state)))) 
+           [] 
+           (range n))))
 
+;-------------------------------
+; Policies
 
+; random-policy :: Player -> State -> Action
+(defn random-policy
+  "Choose a random action from the ones available."
+  [player state]
+  (->> (available-actions player state)
+       (group-by first)
+       (random-value)
+       (rand-nth)))
 
+; greedy-policy :: Player -> State -> Action
+(defn greedy-policy
+  "Choose the available action that maximises the points in the target states."
+  [player state]
 
+  ; Helper function
+  (defn- points [st]
+    (l/focus (comp _points (l/key player)) st))
+
+  (argmax #(points (apply-action % state))
+          (available-actions player state)))
 
 ;; The End
