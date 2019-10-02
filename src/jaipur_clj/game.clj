@@ -85,6 +85,7 @@
 ; apply-action :: Action -> State -> State
 (defn apply-action
   "Apply an action to a state"
+  
   [action state]
   (eval (concat action (list state))))
 

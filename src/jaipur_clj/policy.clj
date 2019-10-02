@@ -4,7 +4,19 @@
 
 (ns jaipur-clj.core
   (:require [lentes.core :as l]
-            [jaipur-clj.hash-calc :as h]))
+            [jaipur-clj.hash-calc :as h]
+            [clojure.java.io :as io]))
+
+;-------------------------------
+; Logging setup
+
+(def log-file-name "game.txt")
+(io/delete-file log-file-name :quiet)
+
+(defn log 
+  "Print a string to a log file."
+  [s]
+  (spit log-file-name (str s "\n") :append true))
 
 ;-------------------------------
 ; Utility functions
@@ -18,7 +30,7 @@
   (key (apply max-key val m)))
 
 (defn argmax
-  "Find the value in xs that maximises (f x)."
+  "Return the value x in xs that maximises (f x)."
   [f xs]
   (apply max-key f xs))
 
@@ -38,8 +50,8 @@
   "Apply a given policy function to generate the next state."
   [policy plyr st]
   (let [action (policy plyr st)]
-    (pp/pprint action)
-    #_(ppst st)
+    (log action)
+    (log st)
     (apply-action action st)))
 
 ;-------------------------------
@@ -56,7 +68,7 @@
     (fn [state i]
       (cond (end-of-game? state) (reduced (apply-end-bonus state))
             :else (do
-                    (println (format "Iteration %d:" i))
+                    (log (format "---- Iteration %d:" i))
                     (->> state
                          (apply-policy policy-a :a)
                          (apply-policy policy-b :b)))))
@@ -71,9 +83,9 @@
 (defn play-n-games
   "Play n games using the same policies and initial state, and aggregate the wins."
   [n policy-a policy-b initial-state]
-  (tally-map 
-   (reduce (fn [s i] (conj s (winner (play-game policy-a policy-b initial-state)))) 
-           [] 
+  (tally-map
+   (reduce (fn [s i] (conj s (winner (play-game policy-a policy-b initial-state))))
+           []
            (range n))))
 
 ;-------------------------------
