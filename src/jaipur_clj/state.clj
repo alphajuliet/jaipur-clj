@@ -54,18 +54,32 @@
    :cloth 1 :spice 1 :leather 1
    :camel 99})
 
-(defn min-sell 
+(defn min-sell
   "The minimum sell number for a resource"
   [rsrc]
   (rsrc min-sell-hash))
 
-(defn count-cards-excl-camels 
+(defn count-cards-excl-camels
   "Count call the cards in a hand, excluding the camels"
   [hand]
-  (- (h/hash-sum hand) 
+  (- (h/hash-sum hand)
      (:camel hand)))
 
-(defn ppst 
+(defn encode-state
+  "Encode the visible state for a given player as a numeric vector of length 21."
+  [plyr state]
+  (let [deck (apply + (vals (l/focus _deck state))) ; number of deck cards
+        hand (vals (l/focus (comp _hand (l/key plyr)) state)) ; hand cards
+        market (vals (l/focus _market state)) ; market cards
+        tokens (vals (l/focus _tokens state))] ; sum of each token pile
+    (->> (list deck
+               hand 
+               market 
+               (map #(apply + %) tokens))
+         concat
+         flatten)))
+
+(defn ppst
   "Pretty print the state."
   [st]
   (print "Deck, Market, Hand A, Hand B:")
