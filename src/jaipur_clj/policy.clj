@@ -13,10 +13,21 @@
 (def log-file-name "game.txt")
 (io/delete-file log-file-name :quiet)
 
-(defn log 
+(defn log
   "Print a string to a log file."
   [s]
-  (spit log-file-name (str s "\n") :append true))
+
+  (defn- spit-seq [dest s]
+    (spit dest 
+          (str "(" 
+               (clojure.string/join " " s) 
+               ")\n") 
+          :append true))
+
+  (if (seq? s)
+    (spit-seq log-file-name s)
+    (spit log-file-name (str s "\n")
+          :append true)))
 
 ;-------------------------------
 ; Utility functions
@@ -51,7 +62,7 @@
   [policy plyr st]
   (let [action (policy plyr st)]
     (log action)
-    (log st)
+    (log (encode-state plyr st))
     (apply-action action st)))
 
 ;-------------------------------
@@ -84,7 +95,8 @@
   "Play n games using the same policies and initial state, and aggregate the wins."
   [n policy-a policy-b initial-state]
   (tally-map
-   (reduce (fn [s i] (conj s (winner (play-game policy-a policy-b initial-state))))
+   (reduce (fn [s i]
+             (conj s (winner (play-game policy-a policy-b initial-state))))
            []
            (range n))))
 
@@ -102,7 +114,7 @@
 
 ; greedy-policy :: Player -> State -> Action
 (defn greedy-policy
-  "Choose the available action that maximises the points in the target states."
+  "Choose the available action that maximises the points in the target states. If none, then pick the final one, as per the `maxkey` function."
   [player state]
 
   ; Helper function
