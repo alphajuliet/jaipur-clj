@@ -13,17 +13,16 @@
 (def log-file-name "game.txt")
 (io/delete-file log-file-name :quiet)
 
+(defn- spit-seq
+  "Convert a sequence to a string in parentheses."
+  [dest s]
+  (spit dest
+        (str "(" (clojure.string/join " " s) ")\n")
+        :append true))
+
 (defn log
   "Print a string to a log file."
   [s]
-
-  (defn- spit-seq [dest s]
-    (spit dest 
-          (str "(" 
-               (clojure.string/join " " s) 
-               ")\n") 
-          :append true))
-
   (if (seq? s)
     (spit-seq log-file-name s)
     (spit log-file-name (str s "\n")
@@ -60,10 +59,11 @@
 (defn apply-policy
   "Apply a given policy function to generate the next state."
   [policy plyr st]
-  (let [action (policy plyr st)]
+  (let [action (policy plyr st)
+        new-state (apply-action action st)]
     (log action)
-    (log (encode-state plyr st))
-    (apply-action action st)))
+    (log (encode-state plyr new-state))
+    new-state))
 
 ;-------------------------------
 ; play-game :: Policy -> State -> State
@@ -74,15 +74,20 @@
 
   ([policy-a policy-b initial-state max-iter]
 
+   ; Log the initial state
+   (log (encode-state :a initial-state))
+   (log (encode-state :b initial-state))
+
   ; Iterate through the actions for each player to generate a final state
    (reduce
     (fn [state i]
-      (cond (end-of-game? state) (reduced (apply-end-bonus state))
-            :else (do
-                    (log (format "---- Iteration %d:" i))
-                    (->> state
-                         (apply-policy policy-a :a)
-                         (apply-policy policy-b :b)))))
+      (if (end-of-game? state)
+        (reduced (apply-end-bonus state))
+        (do
+          (log (format "---- Iteration %d:" i))
+          (->> state
+               (apply-policy policy-a :a)
+               (apply-policy policy-b :b)))))
     initial-state
     (range max-iter))))
 
@@ -112,16 +117,27 @@
        (random-value)
        (rand-nth)))
 
+; Helper function
+(defn- points
+  [player st]
+  (l/focus (comp _points (l/key player)) st))
+
 ; greedy-policy :: Player -> State -> Action
 (defn greedy-policy
   "Choose the available action that maximises the points in the target states. If none, then pick the final one, as per the `maxkey` function."
   [player state]
-
-  ; Helper function
-  (defn- points [st]
-    (l/focus (comp _points (l/key player)) st))
-
-  (argmax #(points (apply-action % state))
+  (argmax #(points player (apply-action % state))
           (available-actions player state)))
+
+; alpha-policy :: Player -> State -> Action
+(defn alpha-policy
+  "Maximise a broader view of the current state."
+  [player state]
+
+  (let [position (fn [curr-st next-st]
+                   (- (points player next-st)
+                      (points player curr-st)))]
+    (argmax #(position state (apply-action % state))
+            (available-actions player state))))
 
 ;; The End

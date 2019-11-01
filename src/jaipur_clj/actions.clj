@@ -39,30 +39,28 @@
        (move-cards (random-card s) _deck _target 1 s))
      st (range n1))))
 
+(defn- bonus-points
+  "Calculate bonus points for 3+ cards"
+  [n]
+  (cond
+    (= n 3) (rand-nth '(1 2 3))
+    (= n 4) (rand-nth '(4 5 6))
+    (= n 5) (rand-nth '(8 9 10))
+    :else 0))
+
 ; take-tokens :: Resource -> Player -> Int -> State -> State
 (defn- take-tokens
   "Take n resource tokens and add to player's score"
   [rsrc plyr n st]
 
-  (defn- bonus-points
-    "Calculate bonus points for 3+ cards"
-    [n]
-    (cond
-      (= n 3) (rand-nth '(1 2 3))
-      (= n 4) (rand-nth '(4 5 6))
-      (= n 5) (rand-nth '(8 9 10))
-      :else 0))
-
-  (def t (l/focus (comp _tokens (l/key rsrc)) st))
-  (def v ; Return the tokens, split into two
-    (if (>= n (count t))
-      [t []]
-      (split-at n t)))
-
-  (->> st
-       (l/over (comp _points (l/key plyr))
-               #(+ % (apply + (first v)) (bonus-points n)))
-       (l/put (comp _tokens (l/key rsrc)) (into [] (second v)))))
+  (let [t (l/focus (comp _tokens (l/key rsrc)) st)
+        v (if (>= n (count t)) ; Return the tokens, split into two
+            [t []]
+            (split-at n t))]
+    (->> st
+         (l/over (comp _points (l/key plyr))
+                 #(+ % (apply + (first v)) (bonus-points n)))
+         (l/put (comp _tokens (l/key rsrc)) (into [] (second v))))))
 
 ;===============================
 ; Game actions

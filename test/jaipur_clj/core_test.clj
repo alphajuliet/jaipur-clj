@@ -30,7 +30,9 @@
   (testing "sell-cards"
     (let [s0 (init-game 0)
           s1 (l/put (l/in [:tokens :spice]) [1] s0)
-          s2 (sell-cards :spice :a s1)]
+          s2 (sell-cards :spice :a s1)
+          s3 (sell-cards :spice :b s0)]
+      (is (> 11 (l/focus (comp _points (l/key :b)) s3)))
       (is (= true (string? (sell-cards-invalid? :diamond :b s0))))
       (is (= [] (l/focus (l/in [:tokens :spice]) s2)))))
 

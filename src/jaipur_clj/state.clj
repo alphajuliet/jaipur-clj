@@ -71,11 +71,13 @@
   (let [deck (apply + (vals (l/focus _deck state))) ; number of deck cards
         hand (vals (l/focus (comp _hand (l/key plyr)) state)) ; hand cards
         market (vals (l/focus _market state)) ; market cards
-        tokens (vals (l/focus _tokens state))] ; sum of each token pile
+        tokens (vals (l/focus _tokens state)) ; sum of each token pile
+        points (l/focus (comp _points (l/key plyr)) state)] ; points for that player
     (->> (list deck
                hand 
                market 
-               (map #(apply + %) tokens))
+               (map #(apply + %) tokens)
+               points)
          concat
          flatten)))
 
