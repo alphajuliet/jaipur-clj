@@ -1,3 +1,0 @@
-(ns jaipur-clj.core)
-
-

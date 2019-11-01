@@ -2,8 +2,10 @@
 ;; Implement the game engine
 ;; AndrewJ 2019-09-22
 
-(ns jaipur-clj.core
-  (:require [jaipur-clj.hash-calc :as h]
+(ns jaipur-clj.game
+  (:require [jaipur-clj.state :refer :all]
+            [jaipur-clj.actions :refer :all]
+            [jaipur-clj.hash-calc :as h]
             [clojure.math.combinatorics :as c]
             [lentes.core :as l]))
 

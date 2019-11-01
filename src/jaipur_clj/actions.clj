@@ -1,8 +1,9 @@
 ;; actions.clj
 ;; AndrewJ 2019-09-21
 
-(ns jaipur-clj.core
-  (:require [lentes.core :as l]
+(ns jaipur-clj.actions
+  (:require [jaipur-clj.state :refer :all]
+            [lentes.core :as l]
             [jaipur-clj.hash-calc :as h]
             [random-seed.core :refer :all])
   (:refer-clojure :exclude [rand rand-int rand-nth]))

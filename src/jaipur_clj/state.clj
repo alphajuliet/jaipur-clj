@@ -1,7 +1,7 @@
 ;; state.clj
 ;; AndrewJ 2019-09-21
 
-(ns jaipur-clj.core
+(ns jaipur-clj.state
   (:require [lentes.core :as l]
             [jaipur-clj.hash-calc :as h]
             [clojure.pprint :as pp]))

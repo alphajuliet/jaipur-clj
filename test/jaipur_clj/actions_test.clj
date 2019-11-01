@@ -1,21 +1,12 @@
-;; core_test.clj
-;; AndrewJ 2019-09-21
+;; actions_test.clj
 
-(ns jaipur-clj.core-test
+(ns jaipur-clj.actions-test
   (:require [clojure.test :refer :all]
-            [jaipur-clj.core :refer :all]
+            [jaipur-clj.state :refer :all]
+            [jaipur-clj.actions :refer :all]
             [jaipur-clj.hash-calc :as h]
             [lentes.core :as l]))
 
-; State
-(deftest state-tests
-  (testing "state"
-    (is (= 7 (count
-              (l/focus (l/in [:tokens :cloth]) initial-state))))
-    (is (= 55 (h/hash-sum all-cards)))
-    (is (= 44 (count-cards-excl-camels all-cards)))))
-
-; Actions
 (deftest actions-tests
   (testing "init-game"
     (is (= 40 (h/hash-sum (l/focus _deck (init-game))))))
@@ -52,7 +43,7 @@
     (testing "Utilities"
       (let [h0 {:a 1 :b 2 :c 3}
             l0 (range 10)]
-        (is (= 6 (count (key-combinations h0 3))))
+        (is (= 6 (count (h/key-combinations h0 3))))
         (is (= 5 (count-if even? l0)))
         (is (= :c (argmax-map h0)))
         (is (= -5 (argmax #(Math/abs %) [-5 1 4])))))
@@ -62,7 +53,5 @@
         (is (= 2 (count (sell-cards-options :a s0))))
         (is (= 3 (count (exchange-cards-options :a s0))))
         (is (= 7 (count (available-actions :a s0))))))))
-
-
 
 ;; The End

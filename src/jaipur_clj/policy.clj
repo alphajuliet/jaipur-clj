@@ -2,9 +2,11 @@
 ;; Game playing policies
 ;; AndrewJ 2019-09-28
 
-(ns jaipur-clj.core
-  (:require [lentes.core :as l]
-            [jaipur-clj.hash-calc :as h]
+(ns jaipur-clj.policy
+  (:require [jaipur-clj.state :refer :all]
+            [jaipur-clj.actions :refer :all]
+            [jaipur-clj.game :refer :all]
+            [lentes.core :as l]
             [clojure.java.io :as io]))
 
 ;-------------------------------
@@ -100,7 +102,7 @@
   "Play n games using the same policies and initial state, and aggregate the wins."
   [n policy-a policy-b initial-state]
   (tally-map
-   (reduce (fn [s i]
+   (reduce (fn [s _]
              (conj s (winner (play-game policy-a policy-b initial-state))))
            []
            (range n))))
