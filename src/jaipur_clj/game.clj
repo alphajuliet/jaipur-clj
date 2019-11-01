@@ -4,7 +4,6 @@
 
 (ns jaipur-clj.core
   (:require [jaipur-clj.hash-calc :as h]
-            [jaipur-clj.util :refer :all]
             [clojure.math.combinatorics :as c]
             [lentes.core :as l]))
 

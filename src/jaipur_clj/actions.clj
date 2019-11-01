@@ -4,7 +4,6 @@
 (ns jaipur-clj.core
   (:require [lentes.core :as l]
             [jaipur-clj.hash-calc :as h]
-            [jaipur-clj.util :refer :all]
             [random-seed.core :refer :all])
   (:refer-clojure :exclude [rand rand-int rand-nth]))
 
