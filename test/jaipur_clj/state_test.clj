@@ -3,6 +3,7 @@
 (ns jaipur-clj.state-test
   (:require [clojure.test :refer :all]
             [jaipur-clj.state :refer :all]
+            [jaipur-clj.hash-calc :as h]
             [lentes.core :as l]))
 
 (deftest state-tests
