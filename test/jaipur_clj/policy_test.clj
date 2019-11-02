@@ -14,6 +14,10 @@
       (is (= 6 (count (key-combinations h0 3))))
       (is (= 5 (count-if even? l0)))
       (is (= :c (argmax-map h0)))
-      (is (= -5 (argmax #(Math/abs %) [-5 1 4]))))))
+      (is (= -5 (argmax #(Math/abs %) [-5 1 4])))))
+  
+  (testing "Metrics"
+    (let [s0 (init-game 0)]
+      (is (= 125 (beta-metric :a s0))))))
 
 ;; The End

@@ -6,11 +6,11 @@
   (:require [jaipur-clj.state :refer :all]
             [jaipur-clj.actions :refer :all]
             [jaipur-clj.game :refer :all]
-            [lentes.core :as l]
+            [jaipur-clj.hash-calc :as h]
             [clojure.java.io :as io]))
 
-;-------------------------------
-; Logging setup
+;;-------------------------------
+;; Logging setup
 
 (def log-file-name "game.txt")
 (io/delete-file log-file-name :quiet)
@@ -30,8 +30,8 @@
     (spit log-file-name (str s "\n")
           :append true)))
 
-;-------------------------------
-; Utility functions
+;;-------------------------------
+;; Utility functions
 
 ; random-value :: Hash a b -> b
 (def random-value (comp rand-nth vals))
@@ -45,6 +45,11 @@
   "Return the value x in xs that maximises (f x)."
   [f xs]
   (apply max-key f xs))
+
+(defn argmin
+  "Return the value x in xs that minimises (f x)."
+  [f xs]
+  (apply min-key f xs))
 
 ; From https://stackoverflow.com/questions/1601321/idiomatic-mode-function-in-clojure
 (defn tally-map
@@ -70,12 +75,12 @@
 ;-------------------------------
 ; play-game :: Policy -> State -> State
 (defn play-game
-  "Play a game with a policy function for each player."
+  "Play a game with a policy function for each player. 
+   Limit the number of turns per player to `max-turns` with default 100."
   ([policy-a policy-b initial-state]
    (play-game policy-a policy-b initial-state 100))
 
-  ([policy-a policy-b initial-state max-iter]
-
+  ([policy-a policy-b initial-state max-turns]
    ; Log the initial state
    (log (encode-state :a initial-state))
    (log (encode-state :b initial-state))
@@ -91,7 +96,7 @@
                (apply-policy policy-a :a)
                (apply-policy policy-b :b)))))
     initial-state
-    (range max-iter))))
+    (range max-turns))))
 
 (defn winner
   "Identify the winner"
@@ -107,8 +112,8 @@
            []
            (range n))))
 
-;-------------------------------
-; Policies
+;;-------------------------------
+;; Policies
 
 ; random-policy :: Player -> State -> Action
 (defn random-policy
@@ -119,27 +124,50 @@
        (random-value)
        (rand-nth)))
 
-; Helper function
 (defn- points
+  "Helper function"
   [player st]
   (l/focus (comp _points (l/key player)) st))
 
 ; greedy-policy :: Player -> State -> Action
 (defn greedy-policy
-  "Choose the available action that maximises the points in the target states. If none, then pick the final one, as per the `maxkey` function."
+  "Choose the available action that maximises the points in the target states. If none, then pick a random one."
   [player state]
   (argmax #(points player (apply-action % state))
-          (available-actions player state)))
+          (shuffle (available-actions player state))))
+
+; points-delta :: Player -> State -> State -> Integer
+(defn points-delta
+  "Measure the points difference between two states."
+  [player curr-st next-st]
+
+  (- (points player next-st)
+     (points player curr-st)))
 
 ; alpha-policy :: Player -> State -> Action
 (defn alpha-policy
-  "Maximise a broader view of the current state."
+  "Maximise difference in points between current and next state."
   [player state]
 
-  (let [position (fn [curr-st next-st]
-                   (- (points player next-st)
-                      (points player curr-st)))]
-    (argmax #(position state (apply-action % state))
-            (available-actions player state))))
+  (argmax #(points-delta player state (apply-action % state))
+          (available-actions player state)))
+
+; token-hand-gap :: Player -> State -> Integer
+(defn token-hand-gap
+  "Measure the gap between the remaining tokens and the player's hand."
+  [player state]
+  (let [hand (get-in state [:hand player])
+        tokens (:tokens state)
+        tsums (zipmap (keys tokens)
+                      (map (partial reduce +) (vals tokens)))]
+    (h/hash-sum (h/hash-sub tsums hand))))
+
+; beta-policy :: Player -> State -> Action
+(defn beta-policy
+  "Maximise the value in the player's hand."
+  [player state]
+
+  (argmin #(token-hand-gap player (apply-action % state))
+          (available-actions player state)))
 
 ;; The End

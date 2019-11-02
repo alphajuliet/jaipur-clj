@@ -13,7 +13,7 @@
 (defn- random-card
   "Random card from the deck"
   [st]
-  (->> (l/focus _deck st)
+  (->> (:deck st)
        (h/hash-enumerate)
        (r/rand-nth)))
 
@@ -33,7 +33,7 @@
   "Deal n cards from the deck to the target"
   [_target n state]
   (let [st state
-        n1 (min n (h/hash-sum (l/focus _deck state)))] ;only deal as many as are left
+        n1 (min n (h/hash-sum (:deck state)))] ;only deal as many as are left
     (reduce
      (fn [s _]
        (move-cards (random-card s) _deck _target 1 s))
@@ -53,14 +53,15 @@
   "Take n resource tokens and add to player's score"
   [rsrc plyr n st]
 
-  (let [t (l/focus (comp _tokens (l/key rsrc)) st)
+  (let [t (get-in st [:tokens rsrc])
         v (if (>= n (count t)) ; Return the tokens, split into two
             [t []]
             (split-at n t))]
-    (->> st
-         (l/over (comp _points (l/key plyr))
-                 #(+ % (apply + (first v)) (bonus-points n)))
-         (l/put (comp _tokens (l/key rsrc)) (into [] (second v))))))
+    (-> st
+        (update-in [:points plyr]
+                   #(+ % (apply + (first v)) (bonus-points n)))
+        (assoc-in [:tokens rsrc]
+                  (into [] (second v))))))
 
 ;===============================
 ; Game actions
@@ -94,7 +95,7 @@
 (defn take-card-invalid?
   "Confirm whether the take-card action is valid."
   [rsrc plyr st]
-  (let [player-hand (l/focus (comp _hand (l/key plyr)) st)]
+  (let [player-hand (get-in st [:hand plyr])]
     (if (and (not (= rsrc :camel))
              (> (count-cards-excl-camels player-hand) 7))
       (format "Player %s cannot have more than 7 cards, excluding camels." plyr)
@@ -108,15 +109,15 @@
   (let [error (take-card-invalid? rsrc plyr st)]
     (assert (boolean? error) error))
 
-  (let [n-market-camels (l/focus (comp _market (l/key :camel)) st)
-        player-hand (comp _hand (l/key plyr))]
+  (let [n-market-camels (get-in st [:market :camel])
+        _player-hand (comp _hand (l/key plyr))]
     (if (= rsrc :camel)
       (->> st
-           (move-cards rsrc _market player-hand n-market-camels)
+           (move-cards rsrc _market _player-hand n-market-camels)
            (deal-cards _market n-market-camels))
      ; else
       (->> st
-           (move-cards rsrc _market player-hand 1)
+           (move-cards rsrc _market _player-hand 1)
            (deal-cards _market 1)))))
 
 ;-------------------------------
@@ -126,7 +127,7 @@
 (defn sell-cards-invalid?
   "Determine whether the sell-cards action is valid."
   [rsrc plyr st]
-  (let [n (l/focus (comp _hand (l/key plyr) (l/key rsrc)) st)]
+  (let [n (get-in st [:hand plyr rsrc])]
     (cond
       (= rsrc :camel) (format "Player %s cannot sell camels." plyr)
       (< n (min-sell rsrc)) (format "Player %s does not enough %s cards to sell." plyr rsrc)
@@ -140,30 +141,29 @@
   (let [error? (sell-cards-invalid? rsrc plyr st)]
     (assert (boolean? error?) error?))
 
-  (let [n (l/focus (comp _hand (l/key plyr) (l/key rsrc)) st)]
+  (let [n (get-in st [:hand plyr rsrc])]
     (->> st
          (l/over (comp _hand (l/key plyr) (l/key rsrc)) #(- % n))
          (take-tokens rsrc plyr n))))
 
-
 ;-------------------------------
 ; Exchange cards
 
-(defn- enough-cards?
-  "Helper function"
-  [cards hand st]
-  (> 0 (h/hash-min (h/hash-sub (l/focus hand st) cards))))
+(defn- not-enough-cards?
+  "Are there enough cards in the hand?"
+  [cards hand]
+  (neg? (h/hash-min (h/hash-sub hand cards))))
 
 (defn exchange-cards-invalid?
   "Determine if the exchange-cards action is valid."
   [player-cards market-cards plyr st]
 
-  (let [player-hand (l/focus (comp _hand (l/key plyr)) st)]
+  (let [player-hand (get-in st [:hand plyr])]
     (cond
       (not (= (h/hash-sum player-cards) (h/hash-sum market-cards)))
       "Different number of resources being exchanged."
-      (or (enough-cards? player-cards (comp _hand (l/key plyr)) st)
-          (enough-cards? market-cards _market st))
+      (or (not-enough-cards? player-cards (get-in st [:hand plyr]))
+          (not-enough-cards? market-cards (:market st)))
       "Cannot exchange resources that aren't available."
       (contains? market-cards :camel)
       "Cannot exchange a camel from the market."
@@ -176,20 +176,16 @@
   "Exchange cards with the market, including swapping for camels."
   [player-cards market-cards plyr st]
 
-  ; Helper functions
-  #_(defn enough-cards? [cards _hand]
-      (> 0 (h/hash-min (h/hash-sub (l/focus _hand st) cards))))
-  #_(def player-hand (l/focus (comp _hand (l/key plyr)) st))
   (let [error? (exchange-cards-invalid? player-cards market-cards plyr st)]
     (assert (boolean? error?) error?))
 
-  (->> st
+  (-> st
         ; Move player cards to market
-       (l/over _market #(h/hash-add % player-cards))
-       (l/over (comp _hand (l/key plyr)) #(h/hash-sub % player-cards))
+      (update :market #(h/hash-add % player-cards))
+      (update-in [:hand plyr] #(h/hash-sub % player-cards))
           ; Move market cards to player
-       (l/over (comp _hand (l/key plyr)) #(h/hash-add % market-cards))
-       (l/over _market #(h/hash-sub % market-cards))))
+      (update-in [:hand plyr] #(h/hash-add % market-cards))
+      (update :market #(h/hash-sub % market-cards))))
 
 ;-------------------------------
 ; end-of-game? :: State -> Boolean
@@ -199,11 +195,10 @@
    - Three token piles are empty"
   [st]
 
-  (let [token-lengths (->> st
-                           (l/focus _tokens)
+  (let [token-lengths (->> (:tokens st)
                            vals
                            (map count))]
-    (or (= 0 (h/hash-sum (l/focus _deck st)))
+    (or (= 0 (h/hash-sum (:deck st)))
         (= 3 (count (filter #(= % 0) token-lengths))))))
 
 ;-------------------------------
@@ -213,10 +208,10 @@
   [st]
 
   #_(println "Apply end bonus points.")
-  (let [ca (l/focus (comp _hand (l/key :a) (l/key :camel)) st)
-        cb (l/focus (comp _hand (l/key :b) (l/key :camel)) st)]
-    (cond (> ca cb) (l/over (comp _points (l/key :a)) #(+ % 5) st)
-          (< ca cb) (l/over (comp _points (l/key :b)) #(+ % 5) st)
+  (let [ca (get-in st [:hand :a :camel])
+        cb (get-in st [:hand :b :camel])]
+    (cond (> ca cb) (update-in st [:points :a] + 5)
+          (< ca cb) (update-in st [:points :b] + 5)
           :else st)))
 
 ;; The End

@@ -29,7 +29,7 @@
 
   (testing "exchange-cards"
     (let [s0 (init-game 0)
-          p {:silver 1 :leather 1}
+          p {:camel 1 :leather 1}
           m {:gold 1 :spice 1}]
       (is (string? (exchange-cards-invalid? p m :a s0)))))
 

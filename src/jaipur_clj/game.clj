@@ -6,8 +6,7 @@
   (:require [jaipur-clj.state :refer :all]
             [jaipur-clj.actions :refer :all]
             [jaipur-clj.hash-calc :as h]
-            [clojure.math.combinatorics :as c]
-            [lentes.core :as l]))
+            [clojure.math.combinatorics :as c]))
 
 ;-------------------------------
 ;; Utilities
@@ -26,9 +25,9 @@
    2. Any (non-camel) resource from the market, if player hand contains less than 7 cards"
   [plyr st]
 
-  (let [market-camels (l/focus (comp _market (l/key :camel)) st)
-        market-cards (l/focus _market st)
-        player-cards (l/focus (comp _hand (l/key plyr)) st)
+  (let [market-camels (get-in st [:market :camel])
+        market-cards (:market st)
+        player-cards (get-in st [:hand plyr])
         n-player-cards (count-cards-excl-camels player-cards)]
     (concat
     ; case 1
@@ -50,7 +49,7 @@
    - Any hand cards with the minimum sell quantity, apart from camels"
   [plyr st]
 
-  (let [player-cards (l/focus (comp _hand (l/key plyr)) st)]
+  (let [player-cards (get-in st [:hand plyr])]
     (for [[k _] (seq player-cards)
           :when (not (sell-cards-invalid? k plyr st))]
       `(sell-cards ~k ~plyr))))
@@ -64,8 +63,8 @@
    - Source and target cards must be different"
   [plyr st]
 
-  (let [player-cards (l/focus (comp _hand (l/key plyr)) st)
-        market-cards (l/focus _market st)]
+  (let [player-cards (get-in st [:hand plyr])
+        market-cards (:market st)]
     (for [n (range 2 (inc (count-cards-excl-camels market-cards)))
           x (c/cartesian-product (key-combinations player-cards n)
                                  (key-combinations (dissoc market-cards :camel) n))
@@ -86,7 +85,7 @@
 ; apply-action :: Action -> State -> State
 (defn apply-action
   "Apply an action to a state"
-  
+
   [action state]
   (eval (concat action (list state))))
 
