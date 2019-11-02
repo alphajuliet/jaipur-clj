@@ -5,7 +5,7 @@
   (:require [jaipur-clj.state :refer :all]
             [lentes.core :as l]
             [jaipur-clj.hash-calc :as h]
-            [random-seed.core :refer :all])
+            [random-seed.core :as r])
   (:refer-clojure :exclude [rand rand-int rand-nth]))
 
 ;-------------------------------
@@ -15,7 +15,7 @@
   [st]
   (->> (l/focus _deck st)
        (h/hash-enumerate)
-       (rand-nth)))
+       (r/rand-nth)))
 
 ;-------------------------------
 ; move-cards :: Resource -> Lens -> Lens -> Int -> State -> State
@@ -35,7 +35,7 @@
   (let [st state
         n1 (min n (h/hash-sum (l/focus _deck state)))] ;only deal as many as are left
     (reduce
-     (fn [s i]
+     (fn [s _]
        (move-cards (random-card s) _deck _target 1 s))
      st (range n1))))
 
@@ -43,9 +43,9 @@
   "Calculate bonus points for 3+ cards"
   [n]
   (cond
-    (= n 3) (rand-nth '(1 2 3))
-    (= n 4) (rand-nth '(4 5 6))
-    (= n 5) (rand-nth '(8 9 10))
+    (= n 3) (r/rand-nth '(1 2 3))
+    (= n 4) (r/rand-nth '(4 5 6))
+    (= n 5) (r/rand-nth '(8 9 10))
     :else 0))
 
 ; take-tokens :: Resource -> Player -> Int -> State -> State
@@ -80,7 +80,7 @@
         (deal-cards (l/in [:hand :a]) 5)
         (deal-cards (l/in [:hand :b]) 5)))
   ([seed]
-   (set-random-seed! seed)
+   (r/set-random-seed! seed)
    (init-game)))
 
 ;-------------------------------
@@ -109,14 +109,14 @@
     (assert (boolean? error) error))
 
   (let [n-market-camels (l/focus (comp _market (l/key :camel)) st)
-        player-hand (l/focus (comp _hand (l/key plyr)) st)]
+        player-hand (comp _hand (l/key plyr))]
     (if (= rsrc :camel)
       (->> st
-           (move-cards rsrc _market (comp _hand (l/key plyr)) n-market-camels)
+           (move-cards rsrc _market player-hand n-market-camels)
            (deal-cards _market n-market-camels))
      ; else
       (->> st
-           (move-cards rsrc _market (comp _hand (l/key plyr)) 1)
+           (move-cards rsrc _market player-hand 1)
            (deal-cards _market 1)))))
 
 ;-------------------------------
@@ -149,26 +149,27 @@
 ;-------------------------------
 ; Exchange cards
 
+(defn- enough-cards?
+  "Helper function"
+  [cards hand st]
+  (> 0 (h/hash-min (h/hash-sub (l/focus hand st) cards))))
+
 (defn exchange-cards-invalid?
   "Determine if the exchange-cards action is valid."
   [player-cards market-cards plyr st]
 
-  (defn- enough-cards? [cards _hand]
-    (> 0 (h/hash-min (h/hash-sub (l/focus _hand st) cards))))
-
-  (def player-hand (l/focus (comp _hand (l/key plyr)) st))
-
-  (cond
-    (not (= (h/hash-sum player-cards) (h/hash-sum market-cards)))
-    "Different number of resources being exchanged."
-    (or (enough-cards? player-cards (comp _hand (l/key plyr)))
-        (enough-cards? market-cards _market))
-    "Cannot exchange resources that aren't available."
-    (contains? market-cards :camel)
-    "Cannot exchange a camel from the market."
-    (> (+ (count-cards-excl-camels player-hand) (:camel player-cards 0)) 7)
-    "Cannot have more than 7 hand cards after exchange."
-    :else false))
+  (let [player-hand (l/focus (comp _hand (l/key plyr)) st)]
+    (cond
+      (not (= (h/hash-sum player-cards) (h/hash-sum market-cards)))
+      "Different number of resources being exchanged."
+      (or (enough-cards? player-cards (comp _hand (l/key plyr)) st)
+          (enough-cards? market-cards _market st))
+      "Cannot exchange resources that aren't available."
+      (contains? market-cards :camel)
+      "Cannot exchange a camel from the market."
+      (> (+ (count-cards-excl-camels player-hand) (:camel player-cards 0)) 7)
+      "Cannot have more than 7 hand cards after exchange."
+      :else false)))
 
 ; exchange-cards ::  Cards -> Cards -> Player ->State -> State
 (defn exchange-cards
@@ -198,14 +199,12 @@
    - Three token piles are empty"
   [st]
 
-  (def token-lengths
-    (->> st
-         (l/focus _tokens)
-         vals
-         (map count)))
-
-  (or (= 0 (h/hash-sum (l/focus _deck st)))
-      (= 3 (count (filter #(= % 0) token-lengths)))))
+  (let [token-lengths (->> st
+                           (l/focus _tokens)
+                           vals
+                           (map count))]
+    (or (= 0 (h/hash-sum (l/focus _deck st)))
+        (= 3 (count (filter #(= % 0) token-lengths))))))
 
 ;-------------------------------
 ; apply-end-bonus :: State -> State

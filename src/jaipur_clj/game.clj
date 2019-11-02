@@ -51,7 +51,7 @@
   [plyr st]
 
   (let [player-cards (l/focus (comp _hand (l/key plyr)) st)]
-    (for [[k v] (seq player-cards)
+    (for [[k _] (seq player-cards)
           :when (not (sell-cards-invalid? k plyr st))]
       `(sell-cards ~k ~plyr))))
 
