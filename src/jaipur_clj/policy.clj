@@ -101,7 +101,7 @@
 (defn winner
   "Identify the winner"
   [st]
-  (argmax-map (l/focus _points st)))
+  (argmax-map (:points st)))
 
 (defn play-n-games
   "Play n games using the same policies and initial state, and aggregate the wins."
@@ -127,7 +127,7 @@
 (defn- points
   "Helper function"
   [player st]
-  (l/focus (comp _points (l/key player)) st))
+  (get-in st [:points player]))
 
 ; greedy-policy :: Player -> State -> Action
 (defn greedy-policy

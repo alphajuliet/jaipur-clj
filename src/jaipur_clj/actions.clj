@@ -3,7 +3,6 @@
 
 (ns jaipur-clj.actions
   (:require [jaipur-clj.state :refer :all]
-            [lentes.core :as l]
             [jaipur-clj.hash-calc :as h]
             [random-seed.core :as r])
   (:refer-clojure :exclude [rand rand-int rand-nth]))
@@ -22,10 +21,10 @@
 (defn move-cards
   "Move n cards from _src to _dest"
   [rsrc _src _dest n st]
-  (assert (<= n (l/focus (comp _src (l/key rsrc)) st)))
-  (->> st
-       (l/over (comp _src (l/key rsrc)) #(- % n))
-       (l/over (comp _dest (l/key rsrc)) #(+ % n))))
+  (assert (<= n (get-in st (conj _src rsrc))))
+  (-> st
+      (update-in (conj _src rsrc) #(- % n))
+      (update-in (conj _dest rsrc) #(+ % n))))
 
 ; Deal n cards from the deck to the target
 ; deal-cards :: Lens -> Int -> State -> State
@@ -36,8 +35,9 @@
         n1 (min n (h/hash-sum (:deck state)))] ;only deal as many as are left
     (reduce
      (fn [s _]
-       (move-cards (random-card s) _deck _target 1 s))
-     st (range n1))))
+       (move-cards (random-card s) [:deck] _target 1 s)) 
+     st
+     (range n1))))
 
 (defn- bonus-points
   "Calculate bonus points for 3+ cards"
@@ -76,10 +76,10 @@
   "Initialise the game, with an optional seed > 0"
   ([]
    (->> initial-state
-        (move-cards :camel _deck _market 3)
-        (deal-cards _market 2)
-        (deal-cards (l/in [:hand :a]) 5)
-        (deal-cards (l/in [:hand :b]) 5)))
+        (move-cards :camel [:deck] [:market] 3)
+        (deal-cards [:market] 2)
+        (deal-cards [:hand :a] 5)
+        (deal-cards [:hand :b] 5)))
   ([seed]
    (r/set-random-seed! seed)
    (init-game)))
@@ -110,15 +110,15 @@
     (assert (boolean? error) error))
 
   (let [n-market-camels (get-in st [:market :camel])
-        _player-hand (comp _hand (l/key plyr))]
+        _player-hand [:hand plyr]]
     (if (= rsrc :camel)
       (->> st
-           (move-cards rsrc _market _player-hand n-market-camels)
-           (deal-cards _market n-market-camels))
+           (move-cards rsrc [:market] _player-hand n-market-camels)
+           (deal-cards [:market] n-market-camels))
      ; else
       (->> st
-           (move-cards rsrc _market _player-hand 1)
-           (deal-cards _market 1)))))
+           (move-cards rsrc [:market] _player-hand 1)
+           (deal-cards [:market] 1)))))
 
 ;-------------------------------
 ; Sell cards
@@ -142,9 +142,9 @@
     (assert (boolean? error?) error?))
 
   (let [n (get-in st [:hand plyr rsrc])]
-    (->> st
-         (l/over (comp _hand (l/key plyr) (l/key rsrc)) #(- % n))
-         (take-tokens rsrc plyr n))))
+    (-> st
+        (update-in [:hand plyr rsrc] #(- % n))
+        (#(take-tokens rsrc plyr n %)))))
 
 ;-------------------------------
 ; Exchange cards
@@ -181,11 +181,11 @@
 
   (-> st
         ; Move player cards to market
-      (update :market #(h/hash-add % player-cards))
+      (update-in [:market] #(h/hash-add % player-cards))
       (update-in [:hand plyr] #(h/hash-sub % player-cards))
           ; Move market cards to player
       (update-in [:hand plyr] #(h/hash-add % market-cards))
-      (update :market #(h/hash-sub % market-cards))))
+      (update-in [:market] #(h/hash-sub % market-cards))))
 
 ;-------------------------------
 ; end-of-game? :: State -> Boolean
