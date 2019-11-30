@@ -65,6 +65,16 @@
   (- (h/hash-sum hand)
      (:camel hand)))
 
+(defn hand-values
+  "Return the vector of hand cards."
+  [player state]
+  (vec (vals (get-in state [:hand player]))))
+
+(defn token-values
+  "Return the vector of sums of the tokens."
+  [state]
+  (mapv (partial apply +) (vals (:tokens state))))
+
 (defn encode-state
   "Encode the visible state for a given player as a numeric vector of length 21."
   [plyr state]

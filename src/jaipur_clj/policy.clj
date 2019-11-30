@@ -60,16 +60,22 @@
   [aseq]
   (apply merge-with + (map (fn [x] {x 1}) aseq)))
 
+(defn dot-product
+  "Dot product of two vectors."
+  [v1 v2]
+  {:pre [(= (count v1) (count v2))]}
+  (reduce + (map * v1 v2)))
+
 ;-------------------------------
 ; type Policy = Player -> State -> Action
 ; apply-policy :: Policy -> Player -> State -> State
 (defn apply-policy
   "Apply a given policy function to generate the next state."
-  [policy plyr st]
-  (let [action (policy plyr st)
+  [policy player st]
+  (let [action (policy player st)
         new-state (apply-action action st)]
     (log action)
-    (log (encode-state plyr new-state))
+    (log (encode-state player new-state))
     new-state))
 
 ;-------------------------------
@@ -89,7 +95,12 @@
    (reduce
     (fn [state i]
       (if (end-of-game? state)
-        (reduced (apply-end-bonus state))
+        (reduced (let [final-state (apply-end-bonus state)]
+                   (log "---- Final state")
+                   (log (encode-state :a final-state))
+                   (log (encode-state :b final-state))
+                   final-state))
+        ;else
         (do
           (log (format "---- Iteration %d:" i))
           (->> state
@@ -133,8 +144,9 @@
 (defn greedy-policy
   "Choose the available action that maximises the points in the target states. If none, then pick a random one."
   [player state]
-  (argmax #(points player (apply-action % state))
-          (shuffle (available-actions player state))))
+  (->> (available-actions player state)
+       shuffle
+       (argmax #(points player (apply-action % state)))))
 
 ; points-delta :: Player -> State -> State -> Integer
 (defn points-delta
@@ -168,6 +180,15 @@
   [player state]
 
   (argmin #(token-hand-gap player (apply-action % state))
+          (available-actions player state)))
+
+; gamma-policy :: Player -> State -> Action
+(defn gamma-policy
+  "Maximise the 'value' of cards in the hand."
+  [player state]
+  (argmax #(let [s (apply-action % state)]
+             (dot-product (hand-values player s)
+                          (token-values s)))
           (available-actions player state)))
 
 ;; The End
