@@ -7,5 +7,5 @@
                  [org.clojure/math.combinatorics "0.1.6"]
                  [funcool/lentes "1.2.0"]
                  [random-seed "1.0.0"]]
-  ;:profiles {:dev {:dependencies [[midje/midje "1.9.9"]]}}
+  :profiles {:dev {:plugins [[lein-topology "0.2.0"]]}}
   :repl-options {:init-ns jaipur-clj.core})

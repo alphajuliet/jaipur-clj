@@ -38,15 +38,6 @@
             :leather [4 3 2 1 1 1 1 1 1]
             :camel []}})
 
-; Lenses
-(def _deck (l/key :deck))
-(def _market (l/key :market))
-(def _hand (l/key :hand))
-(def _points (l/key :points))
-(def _tokens (l/key :tokens))
-;(defn _rsrc [r] (l/key r))
-;(defn _player [p] (l/key p))
-
 ;; -------------------------------------
 ; Minimum sell quantities
 (def min-sell-hash

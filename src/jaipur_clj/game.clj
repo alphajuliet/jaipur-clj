@@ -32,14 +32,14 @@
     (concat
     ; case 1
      (if (> market-camels 0)
-       (list `(take-card :camel ~plyr))
+       (list `(jaipur-clj.actions/take-card :camel ~plyr))
        '())
     ; case 2
      (for [[k v] (seq market-cards)
            :when (not= k :camel)
            :when (> v 0)
            :when (< n-player-cards 7)]
-       `(take-card ~k ~plyr)))))
+       `(jaipur-clj.actions/take-card ~k ~plyr)))))
 
 
 ;-------------------------------
@@ -52,7 +52,7 @@
   (let [player-cards (get-in st [:hand plyr])]
     (for [[k _] (seq player-cards)
           :when (not (sell-cards-invalid? k plyr st))]
-      `(sell-cards ~k ~plyr))))
+      `(jaipur-clj.actions/sell-cards ~k ~plyr))))
 
 ;-------------------------------
 ; sell-cards-options :: Player -> State -> List Action
@@ -71,7 +71,7 @@
           :when (< (+ (count-if #(= :camel %) (first x))
                       (count-cards-excl-camels player-cards))
                    7)]
-      `(exchange-cards ~(h/hash-collect (first x)) ~(h/hash-collect (second x)) ~plyr))))
+      `(jaipur-clj.actions/exchange-cards ~(h/hash-collect (first x)) ~(h/hash-collect (second x)) ~plyr))))
 
 ;-------------------------------
 (defn available-actions
