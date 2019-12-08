@@ -15,7 +15,13 @@
   (distinct (c/combinations (h/hash-enumerate h) n)))
 
 (def count-if
+  "Count items that satisfy the filter."
   (comp count filter))
+
+(defn common-cards
+  "Find the cards common to both hands."
+  [h1 h2]
+  (some (set h1) h2))
 
 ;-------------------------------
 ; take-card-options :: Player -> State -> List Action
@@ -68,10 +74,13 @@
     (for [n (range 2 (inc (count-cards-excl-camels market-cards)))
           x (c/cartesian-product (key-combinations player-cards n)
                                  (key-combinations (dissoc market-cards :camel) n))
-          :when (< (+ (count-if #(= :camel %) (first x))
+          :when (< (+ (count-if (partial = :camel) (first x))
                       (count-cards-excl-camels player-cards))
-                   7)]
-      `(jaipur-clj.actions/exchange-cards ~(h/hash-collect (first x)) ~(h/hash-collect (second x)) ~plyr))))
+                   7)
+          :when (nil? (common-cards (first x) (second x)))]
+      `(jaipur-clj.actions/exchange-cards ~(h/hash-collect (first x))
+                                          ~(h/hash-collect (second x))
+                                          ~plyr))))
 
 ;-------------------------------
 (defn available-actions
