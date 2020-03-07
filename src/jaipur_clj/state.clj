@@ -2,8 +2,7 @@
 ;; AndrewJ 2019-09-21
 
 (ns jaipur-clj.state
-  (:require [jaipur-clj.hash-calc :as h]
-            [clojure.pprint :as pp]))
+  (:require [clojure.pprint :as pp]))
 
 (def empty-hand {:diamond 0
                  :gold 0
@@ -52,7 +51,7 @@
 (defn count-cards-excl-camels
   "Count call the cards in a hand, excluding the camels"
   [hand]
-  (- (h/hash-sum hand)
+  (- (apply + (vals hand))
      (:camel hand)))
 
 (defn hand-values
