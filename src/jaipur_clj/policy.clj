@@ -135,41 +135,41 @@
        (random-value)
        (rand-nth)))
 
-(defn- points
-  "Helper function"
-  [player st]
-  (get-in st [:points player]))
+(defn- score-points
+  "Score the number of points."
+  [player action state]
+  (let [next-state (apply-action action state)]
+    (get-in next-state [:points player])))
 
 ; greedy-policy :: Player -> State -> Action
 (defn greedy-policy
   "Choose the available action that maximises the points in the target states. If none, then pick a random one."
   [player state]
-  (->> (available-actions player state)
-       shuffle
-       (argmax #(points player (apply-action % state)))))
+  (argmax #(score-points player % state) 
+          (shuffle (available-actions player state))))
 
-; points-delta :: Player -> State -> State -> Integer
-(defn points-delta
+; score-a :: Player -> Action -> State -> Integer
+(defn- score-points-delta
   "Measure the points difference between two states."
-  [player curr-st next-st]
-
-  (- (points player next-st)
-     (points player curr-st)))
+  [player action state]
+  (let [next-state (apply-action action state)]
+    (- (points player next-state)
+       (points player state))))
 
 ; alpha-policy :: Player -> State -> Action
 (defn alpha-policy
-  "Maximise difference in points between current and next state."
+  "Maximise delta of points between current and next state."
   [player state]
-
-  (argmax #(points-delta player state (apply-action % state))
+  (argmax #(score-points-delta player % state) 
           (available-actions player state)))
 
 ; token-hand-gap :: Player -> State -> Integer
-(defn token-hand-gap
+(defn- score-token-hand-gap
   "Measure the gap between the remaining tokens and the player's hand."
-  [player state]
-  (let [hand (get-in state [:hand player])
-        tokens (:tokens state)
+  [player action state]
+  (let [next-state (apply-action action state)
+        hand (get-in next-state [:hand player])
+        tokens (:tokens next-state)
         tsums (zipmap (keys tokens)
                       (map (partial reduce +) (vals tokens)))]
     (h/hash-sum (h/hash-sub tsums hand))))
@@ -178,17 +178,21 @@
 (defn beta-policy
   "Maximise the value in the player's hand."
   [player state]
-
-  (argmin #(token-hand-gap player (apply-action % state))
+  (argmin #(score-token-hand-gap player % state)
           (available-actions player state)))
+
+(defn- score-dotp
+  "Calculate the dot product of each available token against each hand card type."
+  [player action state]
+  (let [next-state (apply-action action state)]
+    (dot-product (hand-values player next-state)
+                 (token-values next-state))))
 
 ; gamma-policy :: Player -> State -> Action
 (defn gamma-policy
-  "Maximise the 'value' of cards in the hand."
+  "Maximise the 'value' of cards in the hand against the tokens remaining."
   [player state]
-  (argmax #(let [s (apply-action % state)]
-             (dot-product (hand-values player s)
-                          (token-values s)))
+  (argmax #(score-dotp player % state)
           (available-actions player state)))
 
 ;; The End

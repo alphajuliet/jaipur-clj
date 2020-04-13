@@ -67,11 +67,11 @@
 (defn encode-state
   "Encode the visible state for a given player as a numeric vector of length 21."
   [plyr state]
-  (let [deck (apply + (vals (:deck state))) ; number of deck cards
-        hand (vals (get-in state [:hand plyr])) ; hand cards
-        market (vals (:market state)) ; market cards
-        tokens (vals (:tokens state)) ; sum of each token pile
-        points (get-in state [:points plyr])] ; points for that player
+  (let [deck (apply + (vals (:deck state))) ; number of deck cards (1)
+        hand (vals (get-in state [:hand plyr])) ; hand cards (7)
+        market (vals (:market state)) ; market cards (7)
+        tokens (vals (:tokens state)) ; sum of each token pile (6)
+        points (get-in state [:points plyr])] ; points for that player (1)
     (->> (list deck
                hand 
                market 
