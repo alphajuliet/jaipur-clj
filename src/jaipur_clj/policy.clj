@@ -188,4 +188,18 @@
   (argmax #(score-dotp player % state)
           (available-actions player state)))
 
+(defn- score-dotp-points
+  "Add player points to the dot product score."
+  [player action state]
+  (let [next-state (apply-action action state)]
+    (+ (dot-product (hand-values player next-state)
+                    (token-values next-state))
+       (* 5 (get-in next-state [:points player])))))
+
+(defn delta-policy
+  "Maximise the 'value' of cards in the hand against the tokens remaining, plus getting more points."
+  [player state]
+  (argmax #(score-dotp-points player % state)
+          (shuffle (available-actions player state))))
+
 ;; The End
