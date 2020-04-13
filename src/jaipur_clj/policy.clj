@@ -74,13 +74,16 @@
 (defn play-game
   "Play a game with a policy function for each player. 
    Limit the number of turns per player to `max-turns` with default 100."
+  
+  ; Limit to 100 iterations if none specified.
   ([policy-a policy-b initial-state]
    (play-game policy-a policy-b initial-state 100))
 
   ([policy-a policy-b initial-state max-turns]
-   ; Log the initial state'
+   
    (log (str policy-a))
    (log (str policy-b))
+   (log "---- Initial state ----")
    (log (print-state :a initial-state))
    (log (print-state :b initial-state))
 
@@ -89,13 +92,13 @@
     (fn [state i]
       (if (end-of-game? state)
         (reduced (let [final-state (apply-end-bonus state)]
-                   (log "---- Final state")
+                   (log "---- Final state ----")
                    (log (print-state :a final-state))
                    (log (print-state :b final-state))
                    final-state))
         ;else
         (do
-          (log (format "---- Iteration %d:" i))
+          (log (format "---- Iteration %d: ----" i))
           (->> state
                (apply-policy policy-a :a)
                (apply-policy policy-b :b)))))
@@ -124,8 +127,6 @@
   "Choose a random action from the ones available."
   [player state]
   (->> (available-actions player state)
-       (group-by first)
-       (random-value)
        (rand-nth)))
 
 (defn- score-points
@@ -138,7 +139,7 @@
 (defn greedy-policy
   "Choose the available action that maximises the points in the target states. If none, then pick a random one."
   [player state]
-  (argmax #(score-points player % state) 
+  (argmax #(score-points player % state)
           (shuffle (available-actions player state))))
 
 ; score-a :: Player -> Action -> State -> Integer
@@ -153,7 +154,7 @@
 (defn alpha-policy
   "Maximise delta of points between current and next state."
   [player state]
-  (argmax #(score-points-delta player % state) 
+  (argmax #(score-points-delta player % state)
           (available-actions player state)))
 
 ; token-hand-gap :: Player -> State -> Integer

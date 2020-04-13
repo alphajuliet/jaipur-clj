@@ -196,7 +196,8 @@
   [st]
 
   (let [token-lengths (->> (:tokens st)
-                           vals
+                           (drop-last)
+                           (vals)
                            (map count))]
     (or (= 0 (h/hash-sum (:deck st)))
         (= 3 (count (filter #(= % 0) token-lengths))))))

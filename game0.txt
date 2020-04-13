@@ -1,0 +1,148 @@
+jaipur_clj.policy$greedy_policy@6992fa9f
+jaipur_clj.policy$delta_policy@7309f0d3
+---- Initial state ----
+(40 (0 0 2 0 3 0 0) (0 0 0 0 0 2 3) (29 27 25 17 17 15) 0)
+(40 (1 1 1 0 1 1 0) (0 0 0 0 0 2 3) (29 27 25 17 17 15) 0)
+---- Iteration 0: ----
+(jaipur-clj.actions/sell-cards :spice :a)
+(40 (0 0 2 0 0 0 0) (0 0 0 0 0 2 3) (29 27 25 17 6 15) 14)
+(jaipur-clj.actions/take-card :leather :b)
+(39 (1 1 1 0 1 2 0) (0 1 0 0 0 1 3) (29 27 25 17 6 15) 0)
+---- Iteration 1: ----
+(jaipur-clj.actions/sell-cards :silver :a)
+(39 (0 0 0 0 0 0 0) (0 1 0 0 0 1 3) (29 27 15 17 6 15) 24)
+(jaipur-clj.actions/take-card :gold :b)
+(38 (1 2 1 0 1 2 0) (0 0 0 0 1 1 3) (29 27 15 17 6 15) 0)
+---- Iteration 2: ----
+(jaipur-clj.actions/take-card :leather :a)
+(37 (0 0 0 0 0 1 0) (1 0 0 0 1 0 3) (29 27 15 17 6 15) 24)
+(jaipur-clj.actions/sell-cards :gold :b)
+(37 (1 0 1 0 1 2 0) (1 0 0 0 1 0 3) (29 15 15 17 6 15) 12)
+---- Iteration 3: ----
+(jaipur-clj.actions/sell-cards :leather :a)
+(37 (0 0 0 0 0 0 0) (1 0 0 0 1 0 3) (29 15 15 17 6 11) 28)
+(jaipur-clj.actions/take-card :diamond :b)
+(36 (2 0 1 0 1 2 0) (0 0 0 1 1 0 3) (29 15 15 17 6 11) 12)
+---- Iteration 4: ----
+(jaipur-clj.actions/take-card :spice :a)
+(35 (0 0 0 0 1 0 0) (0 1 0 1 0 0 3) (29 15 15 17 6 11) 28)
+(jaipur-clj.actions/take-card :cloth :b)
+(34 (2 0 1 1 1 2 0) (0 1 0 1 0 0 3) (29 15 15 17 6 11) 12)
+---- Iteration 5: ----
+(jaipur-clj.actions/sell-cards :spice :a)
+(34 (0 0 0 0 0 0 0) (0 1 0 1 0 0 3) (29 15 15 17 4 11) 30)
+(jaipur-clj.actions/sell-cards :diamond :b)
+(34 (0 0 1 1 1 2 0) (0 1 0 1 0 0 3) (15 15 15 17 4 11) 26)
+---- Iteration 6: ----
+(jaipur-clj.actions/take-card :gold :a)
+(33 (0 1 0 0 0 0 0) (0 0 0 1 1 0 3) (15 15 15 17 4 11) 30)
+(jaipur-clj.actions/take-card :cloth :b)
+(32 (0 0 1 2 1 2 0) (0 0 0 0 1 1 3) (15 15 15 17 4 11) 26)
+---- Iteration 7: ----
+(jaipur-clj.actions/take-card :spice :a)
+(31 (0 1 0 0 1 0 0) (0 0 0 0 0 1 4) (15 15 15 17 4 11) 30)
+(jaipur-clj.actions/take-card :leather :b)
+(30 (0 0 1 2 1 3 0) (0 0 0 1 0 0 4) (15 15 15 17 4 11) 26)
+---- Iteration 8: ----
+(jaipur-clj.actions/sell-cards :spice :a)
+(30 (0 1 0 0 0 0 0) (0 0 0 1 0 0 4) (15 15 15 17 2 11) 32)
+(jaipur-clj.actions/sell-cards :leather :b)
+(30 (0 0 1 2 1 0 0) (0 0 0 1 0 0 4) (15 15 15 17 2 5) 33)
+---- Iteration 9: ----
+(jaipur-clj.actions/take-card :cloth :a)
+(29 (0 1 0 1 0 0 0) (0 0 1 0 0 0 4) (15 15 15 17 2 5) 32)
+(jaipur-clj.actions/take-card :silver :b)
+(28 (0 0 2 2 1 0 0) (0 0 0 0 0 1 4) (15 15 15 17 2 5) 33)
+---- Iteration 10: ----
+(jaipur-clj.actions/sell-cards :cloth :a)
+(28 (0 1 0 0 0 0 0) (0 0 0 0 0 1 4) (15 15 15 12 2 5) 37)
+(jaipur-clj.actions/sell-cards :silver :b)
+(28 (0 0 0 2 1 0 0) (0 0 0 0 0 1 4) (15 15 5 12 2 5) 43)
+---- Iteration 11: ----
+(jaipur-clj.actions/take-card :leather :a)
+(27 (0 1 0 0 0 1 0) (0 0 0 0 0 1 4) (15 15 5 12 2 5) 37)
+(jaipur-clj.actions/sell-cards :cloth :b)
+(27 (0 0 0 0 1 0 0) (0 0 0 0 0 1 4) (15 15 5 6 2 5) 49)
+---- Iteration 12: ----
+(jaipur-clj.actions/sell-cards :leather :a)
+(27 (0 1 0 0 0 0 0) (0 0 0 0 0 1 4) (15 15 5 6 2 4) 38)
+(jaipur-clj.actions/take-card :leather :b)
+(26 (0 0 0 0 1 1 0) (0 0 0 0 1 0 4) (15 15 5 6 2 4) 49)
+---- Iteration 13: ----
+(jaipur-clj.actions/take-card :camel :a)
+(22 (0 1 0 0 0 0 4) (1 1 0 1 1 1 0) (15 15 5 6 2 4) 38)
+(jaipur-clj.actions/exchange-cards {:spice 1, :leather 1} {:diamond 1, :gold 1} :b)
+(22 (1 1 0 0 0 0 0) (0 0 0 1 2 2 0) (15 15 5 6 2 4) 49)
+---- Iteration 14: ----
+(jaipur-clj.actions/exchange-cards {:camel 2} {:leather 2} :a)
+(22 (0 1 0 0 0 2 2) (0 0 0 1 2 0 2) (15 15 5 6 2 4) 38)
+(jaipur-clj.actions/take-card :cloth :b)
+(21 (1 1 0 1 0 0 0) (0 1 0 0 2 0 2) (15 15 5 6 2 4) 49)
+---- Iteration 15: ----
+(jaipur-clj.actions/sell-cards :leather :a)
+(21 (0 1 0 0 0 0 2) (0 1 0 0 2 0 2) (15 15 5 6 2 2) 40)
+(jaipur-clj.actions/take-card :gold :b)
+(20 (1 2 0 1 0 0 0) (0 0 0 0 2 0 3) (15 15 5 6 2 2) 49)
+---- Iteration 16: ----
+(jaipur-clj.actions/take-card :spice :a)
+(19 (0 1 0 0 1 0 2) (0 0 0 1 1 0 3) (15 15 5 6 2 2) 40)
+(jaipur-clj.actions/sell-cards :gold :b)
+(19 (1 0 0 1 0 0 0) (0 0 0 1 1 0 3) (15 5 5 6 2 2) 59)
+---- Iteration 17: ----
+(jaipur-clj.actions/sell-cards :spice :a)
+(19 (0 1 0 0 0 0 2) (0 0 0 1 1 0 3) (15 5 5 6 1 2) 41)
+(jaipur-clj.actions/take-card :cloth :b)
+(18 (1 0 0 2 0 0 0) (1 0 0 0 1 0 3) (15 5 5 6 1 2) 59)
+---- Iteration 18: ----
+(jaipur-clj.actions/exchange-cards {:gold 1, :camel 1} {:diamond 1, :spice 1} :a)
+(18 (1 0 0 0 1 0 1) (0 1 0 0 0 0 4) (15 5 5 6 1 2) 41)
+(jaipur-clj.actions/sell-cards :cloth :b)
+(18 (1 0 0 0 0 0 0) (0 1 0 0 0 0 4) (15 5 5 2 1 2) 63)
+---- Iteration 19: ----
+(jaipur-clj.actions/sell-cards :spice :a)
+(18 (1 0 0 0 0 0 1) (0 1 0 0 0 0 4) (15 5 5 2 0 2) 42)
+(jaipur-clj.actions/take-card :gold :b)
+(17 (1 1 0 0 0 0 0) (0 0 0 0 0 0 5) (15 5 5 2 0 2) 63)
+---- Iteration 20: ----
+(jaipur-clj.actions/take-card :camel :a)
+(12 (1 0 0 0 0 0 6) (2 0 0 1 0 1 1) (15 5 5 2 0 2) 42)
+(jaipur-clj.actions/take-card :diamond :b)
+(11 (2 1 0 0 0 0 0) (1 0 0 1 0 1 2) (15 5 5 2 0 2) 63)
+---- Iteration 21: ----
+(jaipur-clj.actions/take-card :leather :a)
+(10 (1 0 0 0 0 1 6) (1 0 1 1 0 0 2) (15 5 5 2 0 2) 42)
+(jaipur-clj.actions/sell-cards :diamond :b)
+(10 (0 1 0 0 0 0 0) (1 0 1 1 0 0 2) (5 5 5 2 0 2) 73)
+---- Iteration 22: ----
+(jaipur-clj.actions/sell-cards :leather :a)
+(10 (1 0 0 0 0 0 6) (1 0 1 1 0 0 2) (5 5 5 2 0 1) 43)
+(jaipur-clj.actions/take-card :silver :b)
+(9 (0 1 1 0 0 0 0) (1 0 0 1 1 0 2) (5 5 5 2 0 1) 73)
+---- Iteration 23: ----
+(jaipur-clj.actions/exchange-cards {:camel 2} {:diamond 1, :spice 1} :a)
+(9 (2 0 0 0 1 0 4) (0 0 0 1 0 0 4) (5 5 5 2 0 1) 43)
+(jaipur-clj.actions/take-card :cloth :b)
+(8 (0 1 1 1 0 0 0) (0 0 0 0 0 0 5) (5 5 5 2 0 1) 73)
+---- Iteration 24: ----
+(jaipur-clj.actions/sell-cards :diamond :a)
+(8 (0 0 0 0 1 0 4) (0 0 0 0 0 0 5) (0 5 5 2 0 1) 48)
+(jaipur-clj.actions/sell-cards :cloth :b)
+(8 (0 1 1 0 0 0 0) (0 0 0 0 0 0 5) (0 5 5 1 0 1) 74)
+---- Iteration 25: ----
+(jaipur-clj.actions/sell-cards :spice :a)
+(8 (0 0 0 0 0 0 4) (0 0 0 0 0 0 5) (0 5 5 1 0 1) 48)
+(jaipur-clj.actions/take-card :camel :b)
+(3 (0 1 1 0 0 0 5) (0 1 0 1 0 2 1) (0 5 5 1 0 1) 74)
+---- Iteration 26: ----
+(jaipur-clj.actions/take-card :camel :a)
+(2 (0 0 0 0 0 0 5) (0 1 0 2 0 2 0) (0 5 5 1 0 1) 48)
+(jaipur-clj.actions/exchange-cards {:camel 4} {:gold 1, :cloth 1, :leather 2} :b)
+(2 (0 2 1 1 0 2 1) (0 0 0 1 0 0 4) (0 5 5 1 0 1) 74)
+---- Iteration 27: ----
+(jaipur-clj.actions/take-card :cloth :a)
+(1 (0 0 0 1 0 0 5) (0 0 1 0 0 0 4) (0 5 5 1 0 1) 48)
+(jaipur-clj.actions/sell-cards :gold :b)
+(1 (0 0 1 1 0 2 1) (0 0 1 0 0 0 4) (0 0 5 1 0 1) 79)
+---- Final state ----
+(1 (0 0 0 1 0 0 5) (0 0 1 0 0 0 4) (0 0 5 1 0 1) 53)
+(1 (0 0 1 1 0 2 1) (0 0 1 0 0 0 4) (0 0 5 1 0 1) 79)
