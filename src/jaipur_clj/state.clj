@@ -73,12 +73,29 @@
         tokens (vals (:tokens state)) ; sum of each token pile (6)
         points (get-in state [:points plyr])] ; points for that player (1)
     (->> (list deck
-               hand 
-               market 
+               hand
+               market
                (map #(apply + %) tokens)
                points)
          concat
          flatten)))
+
+(defn- range-seq
+  "Return the items m to n inclusive from lst."
+  [m n lst]
+  (->> lst
+       (take (inc n))
+       (drop m)))
+
+(defn print-state
+  "Generate a string version of the encoded state for logging."
+  [plyr state]
+  (let [enc (encode-state plyr state)]
+    (list (first enc)
+          (range-seq 1 7 enc)
+          (range-seq 8 14 enc)
+          (range-seq 15 20 enc)
+          (last enc))))
 
 (defn ppst
   "Pretty print the state."

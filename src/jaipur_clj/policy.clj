@@ -15,20 +15,11 @@
 (def log-file-name "game.txt")
 (io/delete-file log-file-name :quiet)
 
-(defn- spit-seq
-  "Convert a sequence to a string in parentheses."
-  [dest s]
-  (spit dest
-        (str "(" (clojure.string/join " " s) ")\n")
-        :append true))
-
 (defn log
   "Print a string to a log file."
   [s]
-  (if (seq? s)
-    (spit-seq log-file-name s)
-    (spit log-file-name (str s "\n")
-          :append true)))
+  (spit log-file-name s :append true)
+  (spit log-file-name "\n" :append true))
 
 ;;-------------------------------
 ;; Utility functions
@@ -75,7 +66,7 @@
   (let [action (policy player st)
         new-state (apply-action action st)]
     (log action)
-    (log (encode-state player new-state))
+    (log (print-state player new-state))
     new-state))
 
 ;-------------------------------
@@ -87,9 +78,11 @@
    (play-game policy-a policy-b initial-state 100))
 
   ([policy-a policy-b initial-state max-turns]
-   ; Log the initial state
-   (log (encode-state :a initial-state))
-   (log (encode-state :b initial-state))
+   ; Log the initial state'
+   (log (str policy-a))
+   (log (str policy-b))
+   (log (print-state :a initial-state))
+   (log (print-state :b initial-state))
 
   ; Iterate through the actions for each player to generate a final state
    (reduce
@@ -97,8 +90,8 @@
       (if (end-of-game? state)
         (reduced (let [final-state (apply-end-bonus state)]
                    (log "---- Final state")
-                   (log (encode-state :a final-state))
-                   (log (encode-state :b final-state))
+                   (log (print-state :a final-state))
+                   (log (print-state :b final-state))
                    final-state))
         ;else
         (do
@@ -153,8 +146,8 @@
   "Measure the points difference between two states."
   [player action state]
   (let [next-state (apply-action action state)]
-    (- (points player next-state)
-       (points player state))))
+    (- (get-in next-state [:points player])
+       (get-in state [:points player]))))
 
 ; alpha-policy :: Player -> State -> Action
 (defn alpha-policy
