@@ -1,16 +1,14 @@
 ;; state_test.clj
 
 (ns jaipur-clj.state-test
-  (:require [clojure.test :refer :all]
-            [jaipur-clj.state :refer :all]
-            [jaipur-clj.hash-calc :as h]
-            [lentes.core :as l]))
+  (:require [clojure.test :refer [deftest testing is]]
+            [jaipur-clj.state :as st]
+            [jaipur-clj.hash-calc :as h]))
 
 (deftest state-tests
   (testing "state"
-    (is (= 7 (count
-              (l/focus (l/in [:tokens :cloth]) initial-state))))
-    (is (= 55 (h/hash-sum all-cards)))
-    (is (= 44 (count-cards-excl-camels all-cards)))))
+    (is (= 7 (count (get-in initial-state [:tokens :cloth]))))
+    (is (= 55 (h/hash-sum st/all-cards)))
+    (is (= 44 (st/count-cards-excl-camels st/all-cards)))))
 
 ;; The End

@@ -2,8 +2,28 @@
 ;; AndrewJ 2019-09-21
 
 (ns jaipur-clj.state
-  (:require [clojure.pprint :as pp]))
+  (:require [clojure.pprint :as pp]
+            [clojure.spec.alpha :as s]
+            [spec-dict :refer [dict dict*]]))
 
+;; -------------------------------------
+;; Spec definitions
+(s/def ::cards (dict {:diamond int? 
+                      :gold int? 
+                      :silver int?
+                      :cloth int?
+                      :spice int?
+                      :leather int? 
+                      :camel int?}))
+(s/def ::tokens (dict {:diamond (s/* int?)
+                       :gold (s/* int?)
+                       :silver (s/* int?)
+                       :cloth (s/* int?)
+                       :spice (s/* int?)
+                       :leather (s/* int?)
+                       :camel (s/* int?)}))
+
+;; -------------------------------------
 (def empty-hand {:diamond 0
                  :gold 0
                  :silver 0
@@ -20,7 +40,14 @@
                 :leather 10
                 :camel 11})
 
+;; -------------------------------------
 ; initial-state :: State
+(s/def ::state (dict {:deck ::cards
+                      :market ::cards
+                      :hand (dict {:a ::cards :b ::cards})
+                      :points (dict {:a int? :b int?})
+                      :tokens ::tokens}))
+
 (def initial-state
   {:deck all-cards
    :market empty-hand
@@ -37,16 +64,15 @@
             :camel []}})
 
 ;; -------------------------------------
-; Minimum sell quantities
-(def min-sell-hash
-  {:diamond 2 :gold 2 :silver 2
-   :cloth 1 :spice 1 :leather 1
-   :camel 99})
-
+;; Utilities
+ 
 (defn min-sell
   "The minimum sell number for a resource"
   [rsrc]
-  (rsrc min-sell-hash))
+  (let [min-sell-hash {:diamond 2 :gold 2 :silver 2
+                       :cloth 1 :spice 1 :leather 1
+                       :camel 99}]
+    (rsrc min-sell-hash)))
 
 (defn count-cards-excl-camels
   "Count call the cards in a hand, excluding the camels"
@@ -100,6 +126,7 @@
 (defn ppst
   "Pretty print the state."
   [st]
+  {:pre (s/valid? ::state st)}
   (print "Deck, Market, Hand A, Hand B:")
   (pp/print-table [(:deck st)
                    (:market st)
