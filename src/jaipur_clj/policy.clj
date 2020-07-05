@@ -3,9 +3,9 @@
 ;; AndrewJ 2019-09-28
 
 (ns jaipur-clj.policy
-  (:require [jaipur-clj.state :refer :all]
-            [jaipur-clj.actions :refer :all]
-            [jaipur-clj.game :refer :all]
+  (:require [jaipur-clj.state :as st]
+            [jaipur-clj.actions :as act]
+            [jaipur-clj.game :as g]
             [jaipur-clj.hash-calc :as h]
             [clojure.java.io :as io]))
 
@@ -64,9 +64,9 @@
   "Apply a given policy function to generate the next state."
   [policy player st]
   (let [action (policy player st)
-        new-state (apply-action action st)]
+        new-state (g/apply-action action st)]
     (log action)
-    (log (print-state player new-state))
+    (log (st/print-state player new-state))
     new-state))
 
 ;-------------------------------
@@ -84,17 +84,17 @@
    (log (str policy-a))
    (log (str policy-b))
    (log "---- Initial state ----")
-   (log (print-state :a initial-state))
-   (log (print-state :b initial-state))
+   (log (st/print-state :a initial-state))
+   (log (st/print-state :b initial-state))
 
   ; Iterate through the actions for each player to generate a final state
    (reduce
     (fn [state i]
-      (if (end-of-game? state)
-        (reduced (let [final-state (apply-end-bonus state)]
+      (if (act/end-of-game? state)
+        (reduced (let [final-state (act/apply-end-bonus state)]
                    (log "---- Final state ----")
-                   (log (print-state :a final-state))
-                   (log (print-state :b final-state))
+                   (log (st/print-state :a final-state))
+                   (log (st/print-state :b final-state))
                    final-state))
         ;else
         (do
@@ -126,13 +126,13 @@
 (defn random-policy
   "Choose a random action from the ones available."
   [player state]
-  (->> (available-actions player state)
+  (->> (g/available-actions player state)
        (rand-nth)))
 
 (defn- score-points
   "Score the number of points."
   [player action state]
-  (let [next-state (apply-action action state)]
+  (let [next-state (g/apply-action action state)]
     (get-in next-state [:points player])))
 
 ; greedy-policy :: Player -> State -> Action
@@ -140,13 +140,13 @@
   "Choose the available action that maximises the points in the target states. If none, then pick a random one."
   [player state]
   (argmax #(score-points player % state)
-          (shuffle (available-actions player state))))
+          (shuffle (g/available-actions player state))))
 
 ; score-a :: Player -> Action -> State -> Integer
 (defn- score-points-delta
   "Measure the points difference between two states."
   [player action state]
-  (let [next-state (apply-action action state)]
+  (let [next-state (g/apply-action action state)]
     (- (get-in next-state [:points player])
        (get-in state [:points player]))))
 
@@ -155,13 +155,13 @@
   "Maximise delta of points between current and next state."
   [player state]
   (argmax #(score-points-delta player % state)
-          (available-actions player state)))
+          (g/available-actions player state)))
 
 ; token-hand-gap :: Player -> State -> Integer
 (defn- score-token-hand-gap
   "Measure the gap between the remaining tokens and the player's hand."
   [player action state]
-  (let [next-state (apply-action action state)
+  (let [next-state (g/apply-action action state)
         hand (get-in next-state [:hand player])
         tokens (:tokens next-state)
         tsums (zipmap (keys tokens)
@@ -173,34 +173,34 @@
   "Maximise the value in the player's hand."
   [player state]
   (argmin #(score-token-hand-gap player % state)
-          (available-actions player state)))
+          (g/available-actions player state)))
 
 (defn- score-dotp
   "Calculate the dot product of each available token against each hand card type."
   [player action state]
-  (let [next-state (apply-action action state)]
-    (dot-product (hand-values player next-state)
-                 (token-values next-state))))
+  (let [next-state (g/apply-action action state)]
+    (dot-product (st/hand-values player next-state)
+                 (st/token-values next-state))))
 
 ; gamma-policy :: Player -> State -> Action
 (defn gamma-policy
   "Maximise the 'value' of cards in the hand against the tokens remaining."
   [player state]
   (argmax #(score-dotp player % state)
-          (available-actions player state)))
+          (g/available-actions player state)))
 
 (defn- score-dotp-points
   "Add player points to the dot product score."
   [player action state]
-  (let [next-state (apply-action action state)]
-    (+ (dot-product (hand-values player next-state)
-                    (token-values next-state))
+  (let [next-state (g/apply-action action state)]
+    (+ (dot-product (st/hand-values player next-state)
+                    (st/token-values next-state))
        (* 5 (get-in next-state [:points player])))))
 
 (defn delta-policy
   "Maximise the 'value' of cards in the hand against the tokens remaining, plus getting more points."
   [player state]
   (argmax #(score-dotp-points player % state)
-          (shuffle (available-actions player state))))
+          (shuffle (g/available-actions player state))))
 
 ;; The End

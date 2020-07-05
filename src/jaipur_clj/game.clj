@@ -3,8 +3,8 @@
 ;; AndrewJ 2019-09-22
 
 (ns jaipur-clj.game
-  (:require [jaipur-clj.state :refer :all]
-            [jaipur-clj.actions :refer :all]
+  (:require [jaipur-clj.state :as st]
+            [jaipur-clj.actions :as act]
             [jaipur-clj.hash-calc :as h]
             [clojure.math.combinatorics :as c]))
 
@@ -34,18 +34,18 @@
   (let [market-camels (get-in st [:market :camel])
         market-cards (:market st)
         player-cards (get-in st [:hand plyr])
-        n-player-cards (count-cards-excl-camels player-cards)]
+        n-player-cards (st/count-cards-excl-camels player-cards)]
     (concat
     ; case 1
      (if (> market-camels 0)
-       (list `(jaipur-clj.actions/take-card :camel ~plyr))
+       (list `(act/take-card :camel ~plyr))
        '())
     ; case 2
      (for [[k v] (seq market-cards)
            :when (not= k :camel)
            :when (> v 0)
            :when (< n-player-cards 7)]
-       `(jaipur-clj.actions/take-card ~k ~plyr)))))
+       `(act/take-card ~k ~plyr)))))
 
 
 ;-------------------------------
@@ -57,8 +57,8 @@
 
   (let [player-cards (get-in st [:hand plyr])]
     (for [[k _] (seq player-cards)
-          :when (not (sell-cards-invalid? k plyr st))]
-      `(jaipur-clj.actions/sell-cards ~k ~plyr))))
+          :when (not (act/sell-cards-invalid? k plyr st))]
+      `(act/sell-cards ~k ~plyr))))
 
 ;-------------------------------
 ; sell-cards-options :: Player -> State -> List Action
@@ -71,11 +71,11 @@
 
   (let [player-cards (get-in st [:hand plyr])
         market-cards (:market st)]
-    (for [n (range 2 (inc (count-cards-excl-camels market-cards)))
+    (for [n (range 2 (inc (st/count-cards-excl-camels market-cards)))
           x (c/cartesian-product (key-combinations player-cards n)
                                  (key-combinations (dissoc market-cards :camel) n))
           :when (< (+ (count-if (partial = :camel) (first x))
-                      (count-cards-excl-camels player-cards))
+                      (st/count-cards-excl-camels player-cards))
                    7)
           :when (nil? (common-cards (first x) (second x)))]
       `(jaipur-clj.actions/exchange-cards ~(h/hash-collect (first x))
@@ -99,6 +99,6 @@
   (eval (concat action (list state))))
 
 ; Standard starting game
-(def s0 (init-game 0))
+(def s0 (act/init-game 0))
 
 ;; The End

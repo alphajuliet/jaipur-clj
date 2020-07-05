@@ -2,7 +2,7 @@
 ;; AndrewJ 2019-09-21
 
 (ns jaipur-clj.actions
-  (:require [jaipur-clj.state :refer :all]
+  (:require [jaipur-clj.state :as st]
             [jaipur-clj.hash-calc :as h]
             [random-seed.core :as r])
   (:refer-clojure :exclude [rand rand-int rand-nth]))
@@ -75,7 +75,7 @@
 ; init-game :: Int? -> State
   "Initialise the game, with an optional seed > 0"
   ([]
-   (->> initial-state
+   (->> st/initial-state
         (move-cards :camel [:deck] [:market] 3)
         (deal-cards [:market] 2)
         (deal-cards [:hand :a] 5)
@@ -97,7 +97,7 @@
   [rsrc plyr st]
   (let [player-hand (get-in st [:hand plyr])]
     (if (and (not (= rsrc :camel))
-             (> (count-cards-excl-camels player-hand) 7))
+             (> (st/count-cards-excl-camels player-hand) 7))
       (format "Player %s cannot have more than 7 cards, excluding camels." plyr)
       false)))
 
@@ -129,8 +129,10 @@
   [rsrc plyr st]
   (let [n (get-in st [:hand plyr rsrc])]
     (cond
-      (= rsrc :camel) (format "Player %s cannot sell camels." plyr)
-      (< n (min-sell rsrc)) (format "Player %s does not enough %s cards to sell." plyr rsrc)
+      (= rsrc :camel) 
+      (format "Player %s cannot sell camels." plyr)
+      (< n (st/min-sell rsrc)) 
+      (format "Player %s does not enough %s cards to sell." plyr rsrc)
       :else false)))
 
 ; sell-cards :: Player -> Resource -> State -> State
@@ -167,7 +169,7 @@
       "Cannot exchange resources that aren't available."
       (contains? market-cards :camel)
       "Cannot exchange a camel from the market."
-      (> (+ (count-cards-excl-camels player-hand) (:camel player-cards 0)) 7)
+      (> (+ (st/count-cards-excl-camels player-hand) (:camel player-cards 0)) 7)
       "Cannot have more than 7 hand cards after exchange."
       :else false)))
 

@@ -3,17 +3,17 @@
 (ns jaipur-clj.game-test
   (:require [clojure.test :refer :all]
             [jaipur-clj.state :refer :all]
-            [jaipur-clj.actions :refer :all]
-            [jaipur-clj.game :refer :all]))
+            [jaipur-clj.actions :as act]
+            [jaipur-clj.game :as g]))
 
 (deftest game-tests
   (testing "available-actions"
-    (let [s0 (init-game 0)
-          s1 (init-game 1)]
-      (is (= 2 (count (take-card-options :a s0))))
-      (is (= 2 (count (sell-cards-options :a s0))))
-      (is (= 3 (count (exchange-cards-options :a s0))))
-      (is (= 2 (count (exchange-cards-options :a s1))))
-      (is (= 7 (count (available-actions :a s0)))))))
+    (let [s0 (act/init-game 0)
+          s1 (act/init-game 1)]
+      (is (= 2 (count (g/take-card-options :a s0))))
+      (is (= 2 (count (g/sell-cards-options :a s0))))
+      (is (= 3 (count (g/exchange-cards-options :a s0))))
+      (is (= 2 (count (g/exchange-cards-options :a s1))))
+      (is (= 7 (count (g/available-actions :a s0)))))))
 
 ;; The End
