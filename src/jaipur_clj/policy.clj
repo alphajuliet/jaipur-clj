@@ -7,7 +7,8 @@
             [jaipur-clj.actions :as act]
             [jaipur-clj.game :as g]
             [jaipur-clj.hash-calc :as h]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
 
 ;;-------------------------------
 ;; Logging setup
@@ -21,37 +22,41 @@
   (spit log-file-name s :append true)
   (spit log-file-name "\n" :append true))
 
+;; Profiling setup
+(tufte/add-basic-println-handler! {})
+
 ;;-------------------------------
 ;; Utility functions
 
 ; random-value :: Hash a b -> b
 (def random-value (comp rand-nth vals))
 
-(defn argmax-map
+(defn- argmax-map
   "Find the key with the maximum value."
   [m]
+  {:pre (map? m)}
   (key (apply max-key val m)))
 
-(defn argmax
+(defn- argmax
   "Return the value x in xs that maximises (f x)."
   [f xs]
   (apply max-key f xs))
 
-(defn argmin
+(defn- argmin
   "Return the value x in xs that minimises (f x)."
   [f xs]
   (apply min-key f xs))
 
 ; From https://stackoverflow.com/questions/1601321/idiomatic-mode-function-in-clojure
-(defn tally-map
-  " Create a map where the keys are all of the unique elements in the input
+(defn- tally-map
+  "Create a map where the keys are all of the unique elements in the input
    sequence and the values represent the number of times those elements
    occur. Note that the keys may not be formatted as conventional Clojure
    keys, i.e. a colon preceding a symbol."
   [aseq]
   (apply merge-with + (map (fn [x] {x 1}) aseq)))
 
-(defn dot-product
+(defn- dot-product
   "Dot product of two vectors."
   [v1 v2]
   {:pre [(= (count v1) (count v2))]}
@@ -63,8 +68,8 @@
 (defn apply-policy
   "Apply a given policy function to generate the next state."
   [policy player st]
-  (let [action (policy player st)
-        new-state (g/apply-action action st)]
+  (let [action (p ::policy (policy player st))
+        new-state (p ::apply-action (g/apply-action action st))]
     (log action)
     (log (st/print-state player new-state))
     new-state))
@@ -74,13 +79,13 @@
 (defn play-game
   "Play a game with a policy function for each player. 
    Limit the number of turns per player to `max-turns` with default 100."
-  
+
   ; Limit to 100 iterations if none specified.
   ([policy-a policy-b initial-state]
    (play-game policy-a policy-b initial-state 100))
 
   ([policy-a policy-b initial-state max-turns]
-   
+
    (log (str policy-a))
    (log (str policy-b))
    (log "---- Initial state ----")
@@ -91,11 +96,12 @@
    (reduce
     (fn [state i]
       (if (act/end-of-game? state)
-        (reduced (let [final-state (act/apply-end-bonus state)]
-                   (log "---- Final state ----")
-                   (log (st/print-state :a final-state))
-                   (log (st/print-state :b final-state))
-                   final-state))
+        (reduced
+         (let [final-state (act/apply-end-bonus state)]
+           (log "---- Final state ----")
+           (log (st/print-state :a final-state))
+           (log (st/print-state :b final-state))
+           final-state))
         ;else
         (do
           (log (format "---- Iteration %d: ----" i))
@@ -105,7 +111,7 @@
     initial-state
     (range max-turns))))
 
-(defn winner
+(defn- winner
   "Identify the winner"
   [st]
   (argmax-map (:points st)))
@@ -115,7 +121,10 @@
   [n policy-a policy-b initial-state]
   (tally-map
    (reduce (fn [s _]
-             (conj s (winner (play-game policy-a policy-b initial-state))))
+             (->> initial-state
+                  (play-game policy-a policy-b)
+                  (winner)
+                  (conj s)))
            []
            (range n))))
 

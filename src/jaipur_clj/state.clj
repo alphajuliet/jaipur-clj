@@ -8,12 +8,12 @@
 
 ;; -------------------------------------
 ;; Spec definitions
-(s/def ::cards (dict {:diamond int? 
-                      :gold int? 
+(s/def ::cards (dict {:diamond int?
+                      :gold int?
                       :silver int?
                       :cloth int?
                       :spice int?
-                      :leather int? 
+                      :leather int?
                       :camel int?}))
 (s/def ::tokens (dict {:diamond (s/* int?)
                        :gold (s/* int?)
