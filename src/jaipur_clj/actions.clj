@@ -197,10 +197,11 @@
    - Three token piles are empty"
   [st]
 
-  (let [token-lengths (->> (:tokens st)
-                           (drop-last)
-                           (vals)
-                           (map count))]
+  (let [token-lengths (as-> st <>
+                        (:tokens <>)
+                        (dissoc <> :camel)
+                        (vals <>)
+                        (map count <>))]
     (or (= 0 (h/hash-sum (:deck st)))
         (= 3 (count (filter #(= % 0) token-lengths))))))
 

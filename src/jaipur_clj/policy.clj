@@ -31,18 +31,18 @@
 ; random-value :: Hash a b -> b
 (def random-value (comp rand-nth vals))
 
-(defn- argmax-map
+(defn argmax-map
   "Find the key with the maximum value."
   [m]
   {:pre (map? m)}
   (key (apply max-key val m)))
 
-(defn- argmax
+(defn argmax
   "Return the value x in xs that maximises (f x)."
   [f xs]
   (apply max-key f xs))
 
-(defn- argmin
+(defn argmin
   "Return the value x in xs that minimises (f x)."
   [f xs]
   (apply min-key f xs))
@@ -111,7 +111,7 @@
     initial-state
     (range max-turns))))
 
-(defn- winner
+(defn- identify-winner
   "Identify the winner"
   [st]
   (argmax-map (:points st)))
@@ -123,7 +123,7 @@
    (reduce (fn [s _]
              (->> initial-state
                   (play-game policy-a policy-b)
-                  (winner)
+                  (identify-winner)
                   (conj s)))
            []
            (range n))))
@@ -146,7 +146,8 @@
 
 ; greedy-policy :: Player -> State -> Action
 (defn greedy-policy
-  "Choose the available action that maximises the points in the target states. If none, then pick a random one."
+  "Choose the available action that maximises the points in the target states.
+   If none, then pick a random one."
   [player state]
   (argmax #(score-points player % state)
           (shuffle (g/available-actions player state))))
@@ -204,6 +205,7 @@
   (let [next-state (g/apply-action action state)]
     (+ (dot-product (st/hand-values player next-state)
                     (st/token-values next-state))
+       (* 2 (get-in next-state [:hand player :camel]))
        (* 5 (get-in next-state [:points player])))))
 
 (defn delta-policy
