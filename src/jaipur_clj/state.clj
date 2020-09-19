@@ -80,16 +80,33 @@
   (- (apply + (vals hand))
      (:camel hand)))
 
+;; hand-values :: Player -> State -> Vector Integer
 (defn hand-values
-  "Return the vector of hand cards."
+  "Return the vector of the number of each card in a hand."
   [player state]
   (vec (vals (get-in state [:hand player]))))
 
+;; token-values :: State -> Vector Integer
 (defn token-values
   "Return the vector of sums of the tokens."
   [state]
   (mapv (partial apply +) (vals (:tokens state))))
 
+(defn- safe-div
+  "Safe division that forces x/0 to 0."
+  [x y]
+  (if (zero? y) 0 (/ x y)))
+
+;; mean-token-values :: State -> Vector Rational
+(defn mean-token-values
+  "Return the vector of mean of the tokens. If the number of tokens is zero
+  then set that result to zero."
+  [state]
+  (let [token-vals ((comp butlast vals :tokens) state)]
+    (mapv #(safe-div (apply + %) (count %))
+          token-vals)))
+
+;; encode-state :: Player -> State -> Vector Integer
 (defn encode-state
   "Encode the visible state for a given player as a numeric vector of length 21."
   [plyr state]

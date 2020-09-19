@@ -167,24 +167,6 @@
   (argmax #(score-points-delta player % state)
           (g/available-actions player state)))
 
-; token-hand-gap :: Player -> State -> Integer
-(defn- score-token-hand-gap
-  "Measure the gap between the remaining tokens and the player's hand."
-  [player action state]
-  (let [next-state (g/apply-action action state)
-        hand (get-in next-state [:hand player])
-        tokens (:tokens next-state)
-        tsums (zipmap (keys tokens)
-                      (map (partial reduce +) (vals tokens)))]
-    (h/hash-sum (h/hash-sub tsums hand))))
-
-; beta-policy :: Player -> State -> Action
-(defn beta-policy
-  "Maximise the value in the player's hand."
-  [player state]
-  (argmin #(score-token-hand-gap player % state)
-          (g/available-actions player state)))
-
 (defn- score-dotp
   "Calculate the dot product of each available token against each hand card type."
   [player action state]
@@ -200,7 +182,7 @@
           (g/available-actions player state)))
 
 (defn- score-dotp-points
-  "Add player points to the dot product score."
+  "Weighted sum of dot product, number of camels, and points."
   [player action state]
   (let [next-state (g/apply-action action state)]
     (+ (dot-product (st/hand-values player next-state)
@@ -209,9 +191,27 @@
        (* 5 (get-in next-state [:points player])))))
 
 (defn delta-policy
-  "Maximise the 'value' of cards in the hand against the tokens remaining, plus getting more points."
+  "Maximise the 'value' of cards in the hand against the tokens remaining,
+  plus getting more points."
   [player state]
   (argmax #(score-dotp-points player % state)
           (shuffle (g/available-actions player state))))
+
+(defn- score-epsilon
+  "As for `score-dotp-points` but using mean token value."
+  [player action state]
+  (let [next-state (g/apply-action action state)]
+    (+ (* 2 (dot-product (butlast (st/hand-values player next-state))
+                         (st/mean-token-values next-state)))
+       (* 2 (get-in next-state [:hand player :camel]))
+       (* 5 (get-in next-state [:points player])))))
+
+(defn epsilon-policy
+  "Maximise the 'value' of cards in the hand against the tokens remaining,
+  plus getting more points."
+  [player state]
+  (argmax #(score-epsilon player % state)
+          (shuffle (g/available-actions player state))))
+
 
 ;; The End
