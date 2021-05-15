@@ -2,13 +2,13 @@
 ;; AndrewJ 2019-09-21
 
 (ns jaipur-clj.actions
-  (:require [jaipur-clj.state :as st]
-            [jaipur-clj.hash-calc :as h]
-            [random-seed.core :as r])
-  (:refer-clojure :exclude [rand rand-int rand-nth]))
+  (:refer-clojure :exclude [rand rand-int rand-nth])
+  (:require [jaipur-clj.hash-calc :as h]
+            [jaipur-clj.state :as st]
+            [random-seed.core :as r]))
 
-;-------------------------------
-; random-card :: State -> Resource
+;;-------------------------------
+;; random-card :: State -> Resource
 (defn- random-card
   "Random card from the deck"
   [st]
@@ -16,8 +16,8 @@
        (h/hash-enumerate)
        (r/rand-nth)))
 
-;-------------------------------
-; move-cards :: Resource -> Lens -> Lens -> Int -> State -> State
+;;-------------------------------
+;; move-cards :: Resource -> Lens -> Lens -> Int -> State -> State
 (defn move-cards
   "Move n cards from _src to _dest"
   [rsrc _src _dest n st]
@@ -26,8 +26,8 @@
       (update-in (conj _src rsrc) #(- % n))
       (update-in (conj _dest rsrc) #(+ % n))))
 
-; Deal n cards from the deck to the target
-; deal-cards :: Lens -> Int -> State -> State
+;; Deal n cards from the deck to the target
+;; deal-cards :: Lens -> Int -> State -> State
 (defn deal-cards
   "Deal n cards from the deck to the target"
   [_target n state]
@@ -48,7 +48,7 @@
     (= n 5) (r/rand-nth '(8 9 10))
     :else 0))
 
-; take-tokens :: Resource -> Player -> Int -> State -> State
+;; take-tokens :: Resource -> Player -> Int -> State -> State
 (defn- take-tokens
   "Take n resource tokens and add to player's score"
   [rsrc plyr n st]
@@ -63,35 +63,21 @@
         (assoc-in [:tokens rsrc]
                   (into [] (second v))))))
 
-;===============================
-; Game actions
-; - Init game
-; - Take cards
-; - Sell cards
-; - Exchange cards
+;;===============================
+;; Game actions
+;; - Init game
+;; - Take cards
+;; - Sell cards
+;; - Exchange cards
 
-;-------------------------------
-(defn init-game
-; init-game :: Int? -> State
-  "Initialise the game, with an optional seed > 0"
-  ([]
-   (->> st/initial-state
-        (move-cards :camel [:deck] [:market] 3)
-        (deal-cards [:market] 2)
-        (deal-cards [:hand :a] 5)
-        (deal-cards [:hand :b] 5)))
-  ([seed]
-   (r/set-random-seed! seed)
-   (init-game)))
+;;-------------------------------
+;; Take a card from the market (or all the camels)
+;; Deal replacement cards to the deck
 
-;-------------------------------
-; Take a card from the market (or all the camels)
-; Deal replacement cards to the deck
+;; Invalid if:
+;; - Player is not taking camels, and already has 7 non-camel cards in their hand
 
-; Invalid if:
-; - Player is not taking camels, and already has 7 non-camel cards in their hand
-
-; take-card-invalid? :: Resource -> Player -> State -> Boolean | String
+;; take-card-invalid? :: Resource -> Player -> State -> Boolean | String
 (defn take-card-invalid?
   "Confirm whether the take-card action is valid."
   [rsrc plyr st]
@@ -101,7 +87,7 @@
       (format "Player %s cannot have more than 7 cards, excluding camels." plyr)
       false)))
 
-; take-card :: Resource -> Player -> State -> State
+;; take-card :: Resource -> Player -> State -> State
 (defn take-card
   "Take a card from the market (or all the camels), and deal replacement cards to the deck"
   [rsrc plyr st]
@@ -120,10 +106,10 @@
            (move-cards rsrc [:market] _player-hand 1)
            (deal-cards [:market] 1)))))
 
-;-------------------------------
-; Sell cards
+;;-------------------------------
+;; Sell cards
 
-; sell-cards-invalid? :: Player -> Resource -> State -> Boolean | String|
+;; sell-cards-invalid? :: Player -> Resource -> State -> Boolean | String|
 (defn sell-cards-invalid?
   "Determine whether the sell-cards action is valid."
   [rsrc plyr st]
@@ -135,7 +121,7 @@
       (format "Player %s does not enough %s cards to sell." plyr rsrc)
       :else false)))
 
-; sell-cards :: Player -> Resource -> State -> State
+;; sell-cards :: Player -> Resource -> State -> State
 (defn sell-cards
   "Sell all the given resources in a player's hand, and take tokens."
   [rsrc plyr st]
@@ -148,8 +134,8 @@
         (update-in [:hand plyr rsrc] #(- % n))
         (#(take-tokens rsrc plyr n %)))))
 
-;-------------------------------
-; Exchange cards
+;;-------------------------------
+;; Exchange cards
 
 (defn- not-enough-cards?
   "Are there enough cards in the hand?"
@@ -173,7 +159,7 @@
       "Cannot have more than 7 hand cards after exchange."
       :else false)))
 
-; exchange-cards ::  Cards -> Cards -> Player ->State -> State
+;; exchange-cards ::  Cards -> Cards -> Player ->State -> State
 (defn exchange-cards
   "Exchange cards with the market, including swapping for camels."
   [player-cards market-cards plyr st]
@@ -189,24 +175,8 @@
       (update-in [:hand plyr] #(h/hash-add % market-cards))
       (update-in [:market] #(h/hash-sub % market-cards))))
 
-;-------------------------------
-; end-of-game? :: State -> Boolean
-(defn end-of-game?
-  "Check for end of game
-   - Deck is empty
-   - Three token piles are empty"
-  [st]
-
-  (let [token-lengths (as-> st <>
-                        (:tokens <>)
-                        (dissoc <> :camel)
-                        (vals <>)
-                        (map count <>))]
-    (or (= 0 (h/hash-sum (:deck st)))
-        (= 3 (count (filter #(= % 0) token-lengths))))))
-
-;-------------------------------
-; apply-end-bonus :: State -> State
+;;-------------------------------
+;; apply-end-bonus :: State -> State
 (defn apply-end-bonus
   "Add end-of-game bonus of 5 points for greater number of camels."
   [st]

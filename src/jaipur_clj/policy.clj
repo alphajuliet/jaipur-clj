@@ -3,12 +3,11 @@
 ;; AndrewJ 2019-09-28
 
 (ns jaipur-clj.policy
-  (:require [jaipur-clj.state :as st]
+  (:require [clojure.java.io :as io]
             [jaipur-clj.actions :as act]
             [jaipur-clj.game :as g]
-            [jaipur-clj.hash-calc :as h]
-            [clojure.java.io :as io]
-            [taoensso.tufte :as tufte :refer (defnp p profiled profile)]))
+            [jaipur-clj.state :as st]
+            [taoensso.tufte :as tufte :refer [p]]))
 
 ;;-------------------------------
 ;; Logging setup
@@ -28,7 +27,7 @@
 ;;-------------------------------
 ;; Utility functions
 
-; random-value :: Hash a b -> b
+;; random-value :: Hash a b -> b
 (def random-value (comp rand-nth vals))
 
 (defn argmax-map
@@ -47,7 +46,7 @@
   [f xs]
   (apply min-key f xs))
 
-; From https://stackoverflow.com/questions/1601321/idiomatic-mode-function-in-clojure
+;; From https://stackoverflow.com/questions/1601321/idiomatic-mode-function-in-clojure
 (defn- tally-map
   "Create a map where the keys are all of the unique elements in the input
    sequence and the values represent the number of times those elements
@@ -62,9 +61,9 @@
   {:pre [(= (count v1) (count v2))]}
   (reduce + (map * v1 v2)))
 
-;-------------------------------
-; type Policy = Player -> State -> Action
-; apply-policy :: Policy -> Player -> State -> State
+;;-------------------------------
+;; type Policy = Player -> State -> Action
+;; apply-policy :: Policy -> Player -> State -> State
 (defn apply-policy
   "Apply a given policy function to generate the next state."
   [policy player st]
@@ -74,13 +73,13 @@
     (log (st/print-state player new-state))
     new-state))
 
-;-------------------------------
-; play-game :: Policy -> State -> State
+;;-------------------------------
+;; play-game :: Policy -> State -> State
 (defn play-game
   "Play a game with a policy function for each player. 
    Limit the number of turns per player to `max-turns` with default 100."
 
-  ; Limit to 100 iterations if none specified.
+  ;; Limit to 100 iterations if none specified.
   ([policy-a policy-b initial-state]
    (play-game policy-a policy-b initial-state 100))
 
@@ -92,10 +91,10 @@
    (log (st/print-state :a initial-state))
    (log (st/print-state :b initial-state))
 
-  ; Iterate through the actions for each player to generate a final state
+  ;; Iterate through the actions for each player to generate a final state
    (reduce
     (fn [state i]
-      (if (act/end-of-game? state)
+      (if (g/end-of-game? state)
         (reduced
          (let [final-state (act/apply-end-bonus state)]
            (log "---- Final state ----")
@@ -131,7 +130,7 @@
 ;;-------------------------------
 ;; Policies
 
-; random-policy :: Player -> State -> Action
+;; random-policy :: Player -> State -> Action
 (defn random-policy
   "Choose a random action from the ones available."
   [player state]
@@ -144,7 +143,7 @@
   (let [next-state (g/apply-action action state)]
     (get-in next-state [:points player])))
 
-; greedy-policy :: Player -> State -> Action
+;; greedy-policy :: Player -> State -> Action
 (defn greedy-policy
   "Choose the available action that maximises the points in the target states.
    If none, then pick a random one."
@@ -152,7 +151,7 @@
   (argmax #(score-points player % state)
           (shuffle (g/available-actions player state))))
 
-; score-a :: Player -> Action -> State -> Integer
+;; score-a :: Player -> Action -> State -> Integer
 (defn- score-points-delta
   "Measure the points difference between two states."
   [player action state]
@@ -160,7 +159,7 @@
     (- (get-in next-state [:points player])
        (get-in state [:points player]))))
 
-; alpha-policy :: Player -> State -> Action
+;; alpha-policy :: Player -> State -> Action
 (defn alpha-policy
   "Maximise delta of points between current and next state."
   [player state]
@@ -174,7 +173,7 @@
     (dot-product (st/hand-values player next-state)
                  (st/token-values next-state))))
 
-; gamma-policy :: Player -> State -> Action
+;; gamma-policy :: Player -> State -> Action
 (defn gamma-policy
   "Maximise the 'value' of cards in the hand against the tokens remaining."
   [player state]

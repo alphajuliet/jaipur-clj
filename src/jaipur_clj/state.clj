@@ -4,6 +4,7 @@
 (ns jaipur-clj.state
   (:require [clojure.pprint :as pp]
             [clojure.spec.alpha :as s]
+            [jaipur-clj.hash-calc :as h]
             [spec-dict :refer [dict dict*]]))
 
 ;; -------------------------------------
@@ -40,12 +41,15 @@
                 :leather 10
                 :camel 11})
 
+(s/def ::player #(:a :b))
+
 ;; -------------------------------------
 ; initial-state :: State
 (s/def ::state (dict {:deck ::cards
                       :market ::cards
                       :hand (dict {:a ::cards :b ::cards})
                       :points (dict {:a int? :b int?})
+                      :turn ::player
                       :tokens ::tokens}))
 
 (def initial-state
@@ -53,6 +57,7 @@
    :market empty-hand
    :hand {:a empty-hand
           :b empty-hand}
+   :turn :a
    :points {:a 0
             :b 0}
    :tokens {:diamond [7 7 5 5 5]
@@ -141,9 +146,9 @@
           (last enc))))
 
 (defn ppst
-  "Pretty print the state."
+  "Pretty print the full state."
   [st]
-  {:pre (s/valid? ::state st)}
+  {:pre [(s/valid? ::state st)]}
   (print "Deck, Market, Hand A, Hand B:")
   (pp/print-table [(:deck st)
                    (:market st)
@@ -151,7 +156,18 @@
                    (get-in st [:hand :b])])
   (print "Points:")
   (pp/print-table [(:points st)])
+  (print "Turn: " (:turn st))
   (println "Tokens:")
   (pp/pprint (:tokens st)))
 
+(defn pphand
+  "Pretty print the hand for a given player."
+  [plyr st]
+  (print "Market ")
+  (println (h/hash-enumerate (:market st)))
+  (print "Hand " plyr " ")
+  (println (h/hash-enumerate (get-in st [:hand plyr])))
+  (println "Turn: " (:turn st))
+  (println "Tokens:")
+  (pp/pprint (:tokens st)))
 ;; The End

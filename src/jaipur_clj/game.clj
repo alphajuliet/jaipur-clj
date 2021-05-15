@@ -3,12 +3,13 @@
 ;; AndrewJ 2019-09-22
 
 (ns jaipur-clj.game
-  (:require [jaipur-clj.state :as st]
+  (:require [clojure.math.combinatorics :as c]
             [jaipur-clj.actions :as act]
             [jaipur-clj.hash-calc :as h]
-            [clojure.math.combinatorics :as c]))
+            [jaipur-clj.state :as st]
+            [random-seed.core :as r]))
 
-;-------------------------------
+;;-------------------------------
 ;; Utilities
 
 (defn key-combinations [h n]
@@ -23,8 +24,37 @@
   [h1 h2]
   (some (set h1) h2))
 
-;-------------------------------
-; take-card-options :: Player -> State -> List Action
+;;-------------------------------
+;; init-game :: Int? -> State
+(defn init-game
+  "Initialise the game, with an optional seed > 0"
+  ([]
+   (->> st/initial-state
+        (act/move-cards :camel [:deck] [:market] 3)
+        (act/deal-cards [:market] 2)
+        (act/deal-cards [:hand :a] 5)
+        (act/deal-cards [:hand :b] 5)))
+  ([seed]
+   (r/set-random-seed! seed)
+   (init-game)))
+
+;;-------------------------------
+;; end-of-game? :: State -> Boolean
+(defn end-of-game?
+  "Check for end of game
+   - Deck is empty
+   - Three token piles are empty"
+  [st]
+  (let [token-lengths (as-> st <>
+                        (:tokens <>)
+                        (dissoc <> :camel)
+                        (vals <>)
+                        (map count <>))]
+    (or (= 0 (h/hash-sum (:deck st)))
+        (= 3 (count (filter #(= % 0) token-lengths))))))
+
+;;-------------------------------
+;; take-card-options :: Player -> State -> List Action
 (defn take-card-options
   "Generate the options for take-card:
    1. Camels, if any are in the market
@@ -48,8 +78,8 @@
        `(act/take-card ~k ~plyr)))))
 
 
-;-------------------------------
-; sell-cards-options :: Player -> State -> List Action
+;;-------------------------------
+;; sell-cards-options :: Player -> State -> List Action
 (defn sell-cards-options
   "Determine the options for sell-cards.
    - Any hand cards with the minimum sell quantity, apart from camels"
@@ -60,8 +90,8 @@
           :when (not (act/sell-cards-invalid? k plyr st))]
       `(act/sell-cards ~k ~plyr))))
 
-;-------------------------------
-; sell-cards-options :: Player -> State -> List Action
+;;-------------------------------
+;; sell-cards-options :: Player -> State -> List Action
 (defn exchange-cards-options
   "List all the exchange-card actions.
    - Min of 2 cards
@@ -82,7 +112,8 @@
                                           ~(h/hash-collect (second x))
                                           ~plyr))))
 
-;-------------------------------
+;;-------------------------------
+;; available-actions :: Player -> State -> [Action]
 (defn available-actions
   "Return all the available actions, given a player and a current state."
   [plyr st]
@@ -90,15 +121,15 @@
           ((juxt take-card-options sell-cards-options exchange-cards-options)
            plyr st)))
 
-;-------------------------------
-; apply-action :: Action -> State -> State
+;;-------------------------------
+;; apply-action :: Action -> State -> State
 (defn apply-action
   "Apply an action to a state"
 
   [action state]
   (eval (concat action (list state))))
 
-; Standard starting game
-(def s0 (act/init-game 0))
+;; Standard starting game
+(def s0 (init-game 0))
 
 ;; The End
