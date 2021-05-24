@@ -25,10 +25,12 @@
     (game/available-actions player state)))
 
 (defn state
-  [state])
+  [state]
+  (:turn state))
 
 (defn state-space
-  [state])
+  [state]
+  [:a :b])
 
 (defn reward
   [state])

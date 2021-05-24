@@ -27,13 +27,14 @@
 ;;-------------------------------
 ;; init-game :: Int? -> State
 (defn init-game
-  "Initialise the game, with an optional seed > 0"
+  "Initialise the game, with an optional seed >= 0"
   ([]
    (->> st/initial-state
         (act/move-cards :camel [:deck] [:market] 3)
         (act/deal-cards [:market] 2)
         (act/deal-cards [:hand :a] 5)
         (act/deal-cards [:hand :b] 5)))
+
   ([seed]
    (r/set-random-seed! seed)
    (init-game)))
@@ -45,6 +46,7 @@
    - Deck is empty
    - Three token piles are empty"
   [st]
+
   (let [token-lengths (as-> st <>
                         (:tokens <>)
                         (dissoc <> :camel)
@@ -117,6 +119,7 @@
 (defn available-actions
   "Return all the available actions, given a player and a current state."
   [plyr st]
+
   (reduce concat '()
           ((juxt take-card-options sell-cards-options exchange-cards-options)
            plyr st)))

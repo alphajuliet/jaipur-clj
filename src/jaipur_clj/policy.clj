@@ -5,7 +5,7 @@
 (ns jaipur-clj.policy
   (:require [clojure.java.io :as io]
             [jaipur-clj.actions :as act]
-            [jaipur-clj.game :as g]
+            [jaipur-clj.game :as game]
             [jaipur-clj.state :as st]
             [taoensso.tufte :as tufte :refer [p]]))
 
@@ -68,7 +68,7 @@
   "Apply a given policy function to generate the next state."
   [policy player st]
   (let [action (p ::policy (policy player st))
-        new-state (p ::apply-action (g/apply-action action st))]
+        new-state (p ::apply-action (game/apply-action action st))]
     (log action)
     (log (st/print-state player new-state))
     new-state))
@@ -94,7 +94,7 @@
   ;; Iterate through the actions for each player to generate a final state
    (reduce
     (fn [state i]
-      (if (g/end-of-game? state)
+      (if (game/end-of-game? state)
         (reduced
          (let [final-state (act/apply-end-bonus state)]
            (log "---- Final state ----")
@@ -134,13 +134,13 @@
 (defn random-policy
   "Choose a random action from the ones available."
   [player state]
-  (->> (g/available-actions player state)
+  (->> (game/available-actions player state)
        (rand-nth)))
 
 (defn- score-points
   "Score the number of points."
   [player action state]
-  (let [next-state (g/apply-action action state)]
+  (let [next-state (game/apply-action action state)]
     (get-in next-state [:points player])))
 
 ;; greedy-policy :: Player -> State -> Action
@@ -149,13 +149,13 @@
    If none, then pick a random one."
   [player state]
   (argmax #(score-points player % state)
-          (shuffle (g/available-actions player state))))
+          (shuffle (game/available-actions player state))))
 
 ;; score-a :: Player -> Action -> State -> Integer
 (defn- score-points-delta
   "Measure the points difference between two states."
   [player action state]
-  (let [next-state (g/apply-action action state)]
+  (let [next-state (game/apply-action action state)]
     (- (get-in next-state [:points player])
        (get-in state [:points player]))))
 
@@ -164,12 +164,12 @@
   "Maximise delta of points between current and next state."
   [player state]
   (argmax #(score-points-delta player % state)
-          (g/available-actions player state)))
+          (game/available-actions player state)))
 
 (defn- score-dotp
   "Calculate the dot product of each available token against each hand card type."
   [player action state]
-  (let [next-state (g/apply-action action state)]
+  (let [next-state (game/apply-action action state)]
     (dot-product (st/hand-values player next-state)
                  (st/token-values next-state))))
 
@@ -178,12 +178,12 @@
   "Maximise the 'value' of cards in the hand against the tokens remaining."
   [player state]
   (argmax #(score-dotp player % state)
-          (g/available-actions player state)))
+          (game/available-actions player state)))
 
 (defn- score-dotp-points
   "Weighted sum of dot product, number of camels, and points."
   [player action state]
-  (let [next-state (g/apply-action action state)]
+  (let [next-state (game/apply-action action state)]
     (+ (dot-product (st/hand-values player next-state)
                     (st/token-values next-state))
        (* 2 (get-in next-state [:hand player :camel]))
@@ -194,12 +194,12 @@
   plus getting more points."
   [player state]
   (argmax #(score-dotp-points player % state)
-          (shuffle (g/available-actions player state))))
+          (shuffle (game/available-actions player state))))
 
 (defn- score-epsilon
   "As for `score-dotp-points` but using mean token value."
   [player action state]
-  (let [next-state (g/apply-action action state)]
+  (let [next-state (game/apply-action action state)]
     (+ (* 2 (dot-product (butlast (st/hand-values player next-state))
                          (st/mean-token-values next-state)))
        (* 2 (get-in next-state [:hand player :camel]))
@@ -210,7 +210,7 @@
   plus getting more points."
   [player state]
   (argmax #(score-epsilon player % state)
-          (shuffle (g/available-actions player state))))
+          (shuffle (game/available-actions player state))))
 
 
 ;; The End
