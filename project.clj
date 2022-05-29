@@ -8,5 +8,6 @@
                  [random-seed "1.0.0"]
                  [spec-dict "0.2.1"]
                  [com.taoensso/tufte "2.2.0"]]
-  :profiles {:dev {:plugins [[lein-topology "0.2.0"]]}}
+  :profiles {:dev {:plugins [[jonase/eastwood "1.2.3"]
+                             [lein-topology "0.2.0"]]}}
   :repl-options {:init-ns jaipur-clj.core})

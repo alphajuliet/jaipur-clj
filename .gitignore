@@ -12,3 +12,4 @@ pom.xml.asc
 .hg/
 game.txt
 .clj-kondo
+.eastwood

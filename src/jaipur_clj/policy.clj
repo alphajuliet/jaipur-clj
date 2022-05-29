@@ -33,7 +33,7 @@
 (defn argmax-map
   "Find the key with the maximum value."
   [m]
-  {:pre (map? m)}
+  {:pre [(map? m)]}
   (key (apply max-key val m)))
 
 (defn argmax
