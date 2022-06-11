@@ -109,7 +109,7 @@
   then set that result to zero."
   [state]
   (let [token-vals ((comp butlast vals :tokens) state)]
-    (mapv #(safe-div (apply + %) (count %))
+    (mapv #(float (safe-div (apply + %) (count %)))
           token-vals)))
 
 ;; encode-state :: Player -> State -> Vector Integer

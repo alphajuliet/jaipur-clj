@@ -184,8 +184,8 @@
   "Weighted sum of dot product, number of camels, and points."
   [player action state]
   (let [next-state (game/apply-action action state)]
-    (+ (dot-product (st/hand-values player next-state)
-                    (st/token-values next-state))
+    (+ (* 1 (dot-product (st/hand-values player next-state)
+                         (st/token-values next-state)))
        (* 2 (get-in next-state [:hand player :camel]))
        (* 5 (get-in next-state [:points player])))))
 
@@ -200,7 +200,7 @@
   "As for `score-dotp-points` but using mean token value."
   [player action state]
   (let [next-state (game/apply-action action state)]
-    (+ (* 2 (dot-product (butlast (st/hand-values player next-state))
+    (+ (* 1 (dot-product (butlast (st/hand-values player next-state))
                          (st/mean-token-values next-state)))
        (* 2 (get-in next-state [:hand player :camel]))
        (* 5 (get-in next-state [:points player])))))
