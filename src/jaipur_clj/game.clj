@@ -70,14 +70,14 @@
     (concat
     ; case 1
      (if (> market-camels 0)
-       (list `(act/take-card :camel ~plyr))
+       (list {:action :take-card :card :camel :player plyr})
        '())
     ; case 2
      (for [[k v] (seq market-cards)
            :when (not= k :camel)
            :when (> v 0)
            :when (< n-player-cards 7)]
-       `(act/take-card ~k ~plyr)))))
+       {:action :take-card :card k :player plyr}))))
 
 
 ;;-------------------------------
@@ -90,7 +90,7 @@
   (let [player-cards (get-in st [:hand plyr])]
     (for [[k _] (seq player-cards)
           :when (not (act/sell-cards-invalid? k plyr st))]
-      `(act/sell-cards ~k ~plyr))))
+      {:action :sell-cards, :card k, :player plyr})))
 
 ;;-------------------------------
 ;; sell-cards-options :: Player -> State -> List Action
@@ -110,9 +110,10 @@
                       (st/count-cards-excl-camels player-cards))
                    7)
           :when (nil? (common-cards (first x) (second x)))]
-      `(jaipur-clj.actions/exchange-cards ~(h/hash-collect (first x))
-                                          ~(h/hash-collect (second x))
-                                          ~plyr))))
+      {:action :exchange-cards
+       :give-cards (h/hash-collect (first x))
+       :take-cards (h/hash-collect (second x))
+       :player plyr})))
 
 ;;-------------------------------
 ;; available-actions :: Player -> State -> [Action]
@@ -130,7 +131,12 @@
   "Apply an action to a state"
 
   [action state]
-  (eval (concat action (list state))))
+  ;; (eval (concat action (list state)))
+  (case (:action action)
+    :take-card (act/take-card (:card action) (:player action) state)
+    :sell-cards (act/sell-cards (:card action) (:player action) state)
+    :exchange-cards (act/exchange-cards (:give-cards action) (:take-cards action) (:player action) state)
+    (throw (Exception. "Unknown action in function apply-action"))))
 
 ;; Standard starting game
 (def s0 (init-game 0))

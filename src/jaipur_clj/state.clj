@@ -41,13 +41,14 @@
                 :leather 10
                 :camel 11})
 
-(s/def ::player #(:a :b))
+(s/def ::player #{:a :b})
+(s/def ::hand (dict {:a ::cards :b ::cards}))
 
 ;; -------------------------------------
 ; initial-state :: State
 (s/def ::state (dict {:deck ::cards
                       :market ::cards
-                      :hand (dict {:a ::cards :b ::cards})
+                      :hand ::hand
                       :points (dict {:a int? :b int?})
                       :turn ::player
                       :tokens ::tokens}))
@@ -170,4 +171,5 @@
   (println "Turn: " (:turn st))
   (println "Tokens:")
   (pp/pprint (:tokens st)))
+
 ;; The End
